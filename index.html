@@ -1,0 +1,3010 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUMEN MAPPER - Web Projection Mapping Studio</title>
+  <style>
+    :root {
+      --bg-darkest: #09090b;
+      --bg-darker: #111115;
+      --bg-surface: #18181f;
+      --bg-card: #20202a;
+      --bg-card-hover: #292936;
+      --border-color: #2e2e3e;
+      --border-bright: #444458;
+      --accent-cyan: #00f0ff;
+      --accent-magenta: #ff007f;
+      --accent-purple: #9d4edd;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --text-primary: #f4f4f6;
+      --text-secondary: #9494a8;
+      --text-muted: #5e5e74;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-darkest);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+
+    /* App Shell */
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Bar */
+    header.app-header {
+      height: 48px;
+      min-height: 48px;
+      background-color: var(--bg-darker);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    .brand-logo svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.8px;
+      background: linear-gradient(90deg, #fff, #b4b4c8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--accent-cyan);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Common Buttons & Inputs */
+    button {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-bright);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.btn-primary {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      border: none;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0, 198, 255, 0.3);
+    }
+
+    button.btn-primary:hover {
+      box-shadow: 0 0 16px rgba(0, 198, 255, 0.5);
+      background: linear-gradient(135deg, #1ad0ff, #1a82ff);
+    }
+
+    button.btn-accent {
+      background: linear-gradient(135deg, var(--accent-magenta), #9d4edd);
+      border: none;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 0, 127, 0.3);
+    }
+
+    button.btn-active {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    button.btn-icon {
+      padding: 6px;
+    }
+
+    button svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Main Workspace Layout */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Sidebar: Layers / Surfaces */
+    .sidebar-left {
+      width: 250px;
+      min-width: 250px;
+      background: var(--bg-darker);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+    }
+
+    .panel-header {
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+    }
+
+    .surface-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .surface-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .surface-item:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-bright);
+    }
+
+    .surface-item.active {
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.08);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+    }
+
+    .surface-item-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .surface-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .surface-item-title {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+    }
+
+    .surface-item-type {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .surface-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      padding: 4px;
+      color: var(--text-muted);
+      border-radius: 4px;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    .icon-btn.active {
+      color: var(--accent-cyan);
+    }
+
+    /* Center Stage Viewport */
+    .viewport {
+      flex: 1;
+      background-color: #050507;
+      background-image:
+        radial-gradient(circle at center, rgba(30, 30, 45, 0.4) 0%, transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Stage Canvas Frame (Projector Output Boundary) */
+    .stage-container {
+      position: relative;
+      width: 960px;
+      height: 540px;
+      background-color: #000000;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 1px #222230;
+      transform-origin: center center;
+      transition: box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+
+    /* Surfaces Wrapper */
+    .surfaces-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .surface-element {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      backface-visibility: visible;
+      overflow: hidden;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .surface-element canvas,
+    .surface-element video,
+    .surface-element img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* SVG Overlay for Handles, Edges, Guides */
+    .overlay-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    .wireframe-polygon {
+      fill: rgba(0, 240, 255, 0.05);
+      stroke: var(--accent-cyan);
+      stroke-width: 1.5;
+      stroke-dasharray: 4, 4;
+      cursor: move;
+      transition: fill 0.15s;
+    }
+
+    .wireframe-polygon:hover {
+      fill: rgba(0, 240, 255, 0.12);
+    }
+
+    .wireframe-polygon.inactive {
+      stroke: rgba(255, 255, 255, 0.3);
+      stroke-dasharray: 2, 2;
+      stroke-width: 1;
+      fill: transparent;
+    }
+
+    .wireframe-polygon.inactive:hover {
+      stroke: rgba(255, 255, 255, 0.6);
+      fill: rgba(255, 255, 255, 0.05);
+    }
+
+    .corner-handle {
+      cursor: crosshair;
+      stroke: #ffffff;
+      stroke-width: 2;
+      transition: r 0.1s ease;
+    }
+
+    .corner-handle:hover {
+      r: 8;
+      stroke-width: 3;
+    }
+
+    .corner-handle.selected {
+      stroke: #ffff00;
+      stroke-width: 3;
+      r: 9;
+    }
+
+    .center-handle {
+      cursor: move;
+      fill: rgba(0, 240, 255, 0.6);
+      stroke: #ffffff;
+      stroke-width: 1.5;
+    }
+
+    .snap-guide-line {
+      stroke: #ffff00;
+      stroke-width: 2;
+      stroke-dasharray: 3, 3;
+    }
+
+    .snap-ring {
+      fill: none;
+      stroke: #ffff00;
+      stroke-width: 2;
+      animation: pulse-ring 1s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse-ring {
+      from { r: 10; opacity: 0.6; }
+      to { r: 16; opacity: 1; }
+    }
+
+    /* Floating Viewport Controls */
+    .viewport-controls {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 20, 28, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      padding: 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 60;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .viewport-info {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: 0 6px;
+      border-right: 1px solid var(--border-color);
+    }
+
+    /* Handle Coordinates HUD */
+    .hud-tooltip {
+      position: absolute;
+      background: rgba(10, 10, 15, 0.9);
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      white-space: nowrap;
+      display: none;
+    }
+
+    /* Right Sidebar: Surface Inspector */
+    .sidebar-right {
+      width: 320px;
+      min-width: 320px;
+      background: var(--bg-darker);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 50;
+    }
+
+    .inspector-section {
+      padding: 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--bg-card);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+    }
+
+    /* Grid of Source Cards */
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .source-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .source-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--border-bright);
+    }
+
+    .source-btn.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    .source-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Coordinate Inputs Grid */
+    .coords-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .coord-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .coord-header {
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .coord-inputs {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .coord-inputs input {
+      width: 100%;
+      padding: 3px 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    /* Status Bar */
+    footer.app-status {
+      height: 24px;
+      min-height: 24px;
+      background: var(--bg-darkest);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      z-index: 100;
+    }
+
+    .status-left, .status-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 6px var(--accent-emerald);
+    }
+
+    /* Modal dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog {
+      background: var(--bg-darker);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      width: 520px;
+      max-width: 90vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    .shortcut-table td {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    kbd {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+    }
+
+    /* Presentation / Projector Fullscreen Mode */
+    body.mode-projector,
+    body.fullscreen-present {
+      background: #000000 !important;
+    }
+
+    body.mode-projector .app-header,
+    body.mode-projector .sidebar-left,
+    body.mode-projector .sidebar-right,
+    body.mode-projector .viewport-controls,
+    body.mode-projector .overlay-svg,
+    body.mode-projector .hud-tooltip,
+    body.mode-projector footer.app-status,
+    body.fullscreen-present .app-header,
+    body.fullscreen-present .sidebar-left,
+    body.fullscreen-present .sidebar-right,
+    body.fullscreen-present .viewport-controls,
+    body.fullscreen-present .overlay-svg,
+    body.fullscreen-present .hud-tooltip,
+    body.fullscreen-present footer.app-status {
+      display: none !important;
+    }
+
+    body.mode-projector .viewport,
+    body.fullscreen-present .viewport {
+      background: #000000 !important;
+      background-image: none !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      cursor: none;
+    }
+
+    body.mode-projector .stage-container,
+    body.fullscreen-present .stage-container {
+      box-shadow: none !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+
+    /* Badge banner for projector output window */
+    .projector-banner {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background: rgba(10, 10, 15, 0.85);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 20px;
+      padding: 6px 14px;
+      color: #fff;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 1.5s ease;
+      pointer-events: auto;
+    }
+
+    .projector-banner.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm11 2h2v-2h-2v2zm0 4h2v-2h-2v2zm-2-2h2v-2h-2v2zm4 0h2v-2h-2v2zm0 4h2v-2h-2v2z"/></svg>
+        </div>
+        <span class="brand-name">LUMEN MAPPER</span>
+        <span class="brand-badge">MVP</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Preset Selector -->
+        <select id="presetSelect" title="シーンプリセット">
+          <option value="cube">📐 3D キューブ (3面)</option>
+          <option value="columns">🏛️ ツインピラー (2本)</option>
+          <option value="grid">🔲 4面マルチグリッド (2x2)</option>
+          <option value="single">📺 シングルスクリーン (台形補正)</option>
+        </select>
+
+        <button id="addSurfaceBtn" class="btn-primary" title="サーフェス追加">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          サーフェス追加
+        </button>
+
+        <button id="snapToggleBtn" class="btn-active" title="頂点マグネット吸着">
+          <svg viewBox="0 0 24 24"><path d="M21 9v2h-2V9h2m0-4v2h-2V5h2m-4 14v2h-2v-2h2m4-4v2h-2v-2h2m-4-10V3h2v2h-2m-8 6h6v2H9v-2m4 10v-2h2v2h-2m0-16V3h2v2h-2M5 21c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h4v2H5v14h14v-4h2v4c0 1.1-.9 2-2 2H5z"/></svg>
+          スナップ ON
+        </button>
+
+        <button id="audioToggleBtn" title="マイク音声反応">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+          Audio 反応
+        </button>
+
+        <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
+
+        <button id="undoBtn" class="btn-icon" title="元に戻す (Ctrl+Z)">
+          <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        </button>
+        <button id="redoBtn" class="btn-icon" title="やり直す (Ctrl+Y)">
+          <svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+        </button>
+
+        <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
+
+        <button id="openProjectorBtn" title="別ウィンドウでプロジェクター出力画面を開く">
+          <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+          プロジェクター投影窓
+        </button>
+
+        <button id="presentBtn" class="btn-accent" title="全画面プレゼン投影 (F)">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          全画面投影 (F)
+        </button>
+
+        <button id="saveExportBtn" title="プロジェクトの保存と書き出し">
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          保存/読込
+        </button>
+
+        <button id="helpBtn" class="btn-icon" title="ヘルプ・ショートカット">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+      <!-- Left Panel: Layers / Surfaces -->
+      <aside class="sidebar-left">
+        <div class="panel-header">
+          <span>レイヤー / サーフェス</span>
+          <span id="surfaceCountBadge" style="color: var(--accent-cyan);">3</span>
+        </div>
+        <div class="surface-list" id="surfaceList">
+          <!-- Dynamic surface list items -->
+        </div>
+        <div style="padding: 10px; border-top: 1px solid var(--border-color);">
+          <button id="duplicateSurfaceBtn" style="width: 100%; justify-content: center;">
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            選択面を複製
+          </button>
+        </div>
+      </aside>
+
+      <!-- Center Stage Viewport -->
+      <main class="viewport" id="viewport">
+        <div class="stage-container" id="stageContainer">
+          <!-- Warped Content Elements Container -->
+          <div class="surfaces-layer" id="surfacesLayer"></div>
+
+          <!-- SVG Overlay for outlines and handles -->
+          <svg class="overlay-svg" id="overlaySvg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+            <defs>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <g id="svgPolygonsGroup"></g>
+            <g id="svgSnapGuidesGroup"></g>
+            <g id="svgHandlesGroup"></g>
+          </svg>
+        </div>
+
+        <!-- Floating HUD Coordinates Tooltip -->
+        <div class="hud-tooltip" id="hudTooltip">TL: X: 120, Y: 80</div>
+
+        <!-- Viewport Zoom Controls -->
+        <div class="viewport-controls">
+          <span class="viewport-info" id="stageResInfo">1920 × 1080 (16:9)</span>
+          <button id="zoomOutBtn" class="btn-icon" title="縮小"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg></button>
+          <span id="zoomLevelText" style="font-family: var(--font-mono); font-size: 11px; min-width: 42px; text-align: center;">50%</span>
+          <button id="zoomInBtn" class="btn-icon" title="拡大"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+          <button id="zoomFitBtn" style="padding: 4px 8px; font-size: 11px;" title="ステージに合わせる">Fit</button>
+          <button id="toggleHandlesBtn" class="btn-icon btn-active" title="ハンドル表示切替 (H)">
+            <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </button>
+        </div>
+      </main>
+
+      <!-- Right Panel: Surface Inspector -->
+      <aside class="sidebar-right" id="sidebarRight">
+        <div class="panel-header">
+          <span>サーフェス設定</span>
+          <button id="deleteSurfaceBtn" class="icon-btn" title="サーフェス削除" style="color: var(--accent-rose);">
+            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        </div>
+
+        <!-- General Info -->
+        <div class="inspector-section">
+          <div class="form-group">
+            <label class="form-label">サーフェス名</label>
+            <input type="text" id="surfaceNameInput" value="Surface 1" style="width: 100%;">
+          </div>
+          <div class="form-row">
+            <div style="flex: 1;">
+              <label class="form-label">識別カラー</label>
+              <input type="color" id="surfaceColorInput" value="#00f0ff" style="width: 100%; height: 28px; background: transparent; border: none; cursor: pointer;">
+            </div>
+            <div style="flex: 1;">
+              <label class="form-label">不透明度 <span id="opacityValText">100%</span></label>
+              <input type="range" id="surfaceOpacityInput" min="0" max="100" value="100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Source Selector -->
+        <div class="inspector-section">
+          <div class="section-title">コンテンツソース</div>
+          <div class="source-grid">
+            <div class="source-btn active" data-source="neon_grid">
+              <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"/></svg>
+              ネオングリッド
+            </div>
+            <div class="source-btn" data-source="pulse_waves">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              パルスウェーブ
+            </div>
+            <div class="source-btn" data-source="particles">
+              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V17a1 1 0 0 1-2 0v-.07A8 8 0 0 1 4.07 10H5a1 1 0 0 1 0-2h-.93A8 8 0 0 1 11 4.07V5a1 1 0 0 1 2 0v-.93A8 8 0 0 1 19.93 11H19a1 1 0 0 1 0 2h.93A8 8 0 0 1 13 16.93z"/></svg>
+              パーティクル
+            </div>
+            <div class="source-btn" data-source="matrix">
+              <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
+              マトリックス
+            </div>
+            <div class="source-btn" data-source="kaleidoscope">
+              <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.22 19.9 10.57 20.3 12 20.3c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15.5c-3.58 0-6.5-2.92-6.5-6.5S8.42 5.5 12 5.5s6.5 2.92 6.5 6.5-2.92 6.5-6.5 6.5z"/></svg>
+              万華鏡トンネル
+            </div>
+            <div class="source-btn" data-source="clock">
+              <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+              デジタル時計
+            </div>
+            <div class="source-btn" data-source="calibration">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v4h4v2h-4v4h-2v-4H7v-2h4V7z"/></svg>
+              テストグリッド
+            </div>
+            <div class="source-btn" data-source="smpte">
+              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H7v-4h4v4zm0-6H7V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4z"/></svg>
+              カラーバー
+            </div>
+            <div class="source-btn" data-source="media">
+              <svg viewBox="0 0 24 24"><path d="M21 3H3C2 3 1 4 1 5v14c0 1 1 2 2 2h18c1 0 2-1 2-2V5c0-1-1-2-2-2zm0 16H3V5h18v14zm-10-7l-3.5 4.51L5 13l4-5 2 2.5 3-3.83L19 16H7l4-4z"/></svg>
+              画像/動画ファイル
+            </div>
+            <div class="source-btn" data-source="webcam">
+              <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+              Webカメラ映像
+            </div>
+          </div>
+
+          <!-- Media file upload container (shown when source is media) -->
+          <div id="mediaUploadBox" style="margin-top: 10px; display: none;">
+            <label class="form-label">ローカルファイル読込 (動画/画像)</label>
+            <input type="file" id="mediaFileInput" accept="video/*,image/*" style="width: 100%; font-size: 11px;">
+            <div style="margin-top: 4px; font-size: 10px; color: var(--text-muted);">
+              MP4, WebM, PNG, JPG, GIF 等に対応
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Effects & Blending -->
+        <div class="inspector-section">
+          <div class="section-title">描画エフェクト & ブレンド</div>
+          <div class="form-group">
+            <label class="form-label">ブレンドモード</label>
+            <select id="blendModeSelect" style="width: 100%;">
+              <option value="normal">Normal (通常)</option>
+              <option value="screen">Screen (スクリーン - 加算調)</option>
+              <option value="lighter">Add / Lighter (単純加算)</option>
+              <option value="multiply">Multiply (乗算)</option>
+              <option value="overlay">Overlay (オーバーレイ)</option>
+              <option value="difference">Difference (差の絶対値)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">マスク形状 (エッジソフト化)</label>
+            <select id="maskShapeSelect" style="width: 100%;">
+              <option value="none">なし (矩形)</option>
+              <option value="circle">円形 / 楕円マスク</option>
+              <option value="vignette">ソフトエッジ (フェザーぼかし)</option>
+              <option value="diamond">ダイヤモンド (ひし形)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div style="flex: 1;">
+              <label class="form-label">明度 <span id="brightnessValText">100%</span></label>
+              <input type="range" id="brightnessInput" min="20" max="200" value="100">
+            </div>
+            <div style="flex: 1;">
+              <label class="form-label">コントラスト <span id="contrastValText">100%</span></label>
+              <input type="range" id="contrastInput" min="20" max="200" value="100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Corner Points Coordinate Inspector -->
+        <div class="inspector-section">
+          <div class="section-title">
+            <span>4隅の座標 (キーストーン)</span>
+            <button id="resetCornersBtn" style="padding: 2px 6px; font-size: 10px;">リセット</button>
+          </div>
+
+          <div class="coords-grid">
+            <div class="coord-box">
+              <div class="coord-header" style="color: var(--accent-emerald);">● 左上 (TL)</div>
+              <div class="coord-inputs">
+                <span>X</span><input type="number" id="coord-p0-x" step="1">
+                <span>Y</span><input type="number" id="coord-p0-y" step="1">
+              </div>
+            </div>
+            <div class="coord-box">
+              <div class="coord-header" style="color: var(--accent-cyan);">● 右上 (TR)</div>
+              <div class="coord-inputs">
+                <span>X</span><input type="number" id="coord-p1-x" step="1">
+                <span>Y</span><input type="number" id="coord-p1-y" step="1">
+              </div>
+            </div>
+            <div class="coord-box">
+              <div class="coord-header" style="color: var(--accent-purple);">● 右下 (BR)</div>
+              <div class="coord-inputs">
+                <span>X</span><input type="number" id="coord-p2-x" step="1">
+                <span>Y</span><input type="number" id="coord-p2-y" step="1">
+              </div>
+            </div>
+            <div class="coord-box">
+              <div class="coord-header" style="color: var(--accent-rose);">● 左下 (BL)</div>
+              <div class="coord-inputs">
+                <span>X</span><input type="number" id="coord-p3-x" step="1">
+                <span>Y</span><input type="number" id="coord-p3-y" step="1">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 10px; display: flex; gap: 6px;">
+            <button id="centerSurfaceBtn" style="flex: 1; justify-content: center; font-size: 11px;">
+              中央配置
+            </button>
+            <button id="fitStageBtn" style="flex: 1; justify-content: center; font-size: 11px;">
+              全面フィット
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Status Bar -->
+    <footer class="app-status">
+      <div class="status-left">
+        <div class="status-pill">
+          <div class="status-indicator"></div>
+          <span>LUMEN ENGINE READY</span>
+        </div>
+        <span id="activeSurfaceStatus">選択中: Surface 1</span>
+      </div>
+      <div class="status-right">
+        <span id="fpsCounter">60 FPS</span>
+        <span>Dual Screen Sync: <b id="syncStateText" style="color: var(--accent-cyan);">Connected</b></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Help / Shortcut Modal -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">プロジェクションマッピング操作ガイド</div>
+        <button id="closeHelpBtn" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <h4 style="color: var(--accent-cyan); margin-bottom: 8px;">プロジェクター設置と投影手順</h4>
+        <ol style="padding-left: 20px; margin-bottom: 16px; color: var(--text-secondary); font-size: 12px; line-height: 1.7;">
+          <li>PCにプロジェクターを接続し、OS設定でディスプレイを「拡張」にします。</li>
+          <li><b>「プロジェクター投影窓」</b>ボタンを押して出力専用ウィンドウを開き、プロジェクター画面へドラッグして <kbd>F11</kbd> またはダブルクリックで全画面化します。</li>
+          <li>手元のメインウィンドウで各サーフェスの4隅の丸ハンドルをドラッグし、投影対象の箱や壁の角に合わせてワープ補正します。</li>
+          <li>マグネットスナップが有効なため、隣り合う面の頂点同士がピタッと吸着します。</li>
+        </ol>
+
+        <h4 style="color: var(--accent-cyan); margin-bottom: 8px;">キーボードショートカット</h4>
+        <table class="shortcut-table">
+          <tr><td><kbd>F</kbd></td><td>全画面プレゼンテーションモード（黒背景・UI非表示）の切替</td></tr>
+          <tr><td><kbd>H</kbd></td><td>ハンドル・ガイド枠線の表示/非表示トグル</td></tr>
+          <tr><td><kbd>Tab</kbd></td><td>選択ハンドルの切り替え（左上→右上→右下→左下）</td></tr>
+          <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td>選択した頂点を 1px 微調整移動（微細なキーストーン調整）</td></tr>
+          <tr><td><kbd>Shift</kbd> + <kbd>矢印</kbd></td><td>頂点を 10px 高速移動</td></tr>
+          <tr><td><kbd>Space</kbd></td><td>アニメーションの一時停止 / 再開</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Y</kbd></td><td>頂点移動の Undo / Redo</td></tr>
+          <tr><td><kbd>1</kbd> 〜 <kbd>9</kbd></td><td>対応する番号のサーフェスを選択</td></tr>
+          <tr><td><kbd>Delete</kbd></td><td>選択中のサーフェスを削除</td></tr>
+          <tr><td><kbd>?</kbd></td><td>このヘルプモーダルを表示</td></tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="confirmHelpBtn">了解</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save / Export Modal -->
+  <div class="modal-overlay" id="saveModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">プロジェクトの保存と書き出し</div>
+        <button id="closeSaveBtn" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 12px;">
+          マッピングの全サーフェス配置・幾何変形データ・コンテンツ設定を保存またはJSONファイルとして書き出します。
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button id="saveLocalBtn" class="btn-primary" style="justify-content: center; padding: 8px;">
+            💾 ブラウザに保存 (LocalStorage)
+          </button>
+          <button id="exportJsonBtn" style="justify-content: center; padding: 8px;">
+            📤 JSONファイルとしてダウンロード
+          </button>
+          <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 5px;">
+            <label class="form-label">📥 JSONファイルからインポート</label>
+            <input type="file" id="importJsonInput" accept=".json" style="width: 100%;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * LUMEN MAPPER - Core Application Logic
+     */
+    (function () {
+      // Stage standard resolution
+      const STAGE_WIDTH = 1920;
+      const STAGE_HEIGHT = 1080;
+      const SURFACE_RES_W = 800;
+      const SURFACE_RES_H = 600;
+      const BROADCAST_CHANNEL_NAME = 'lumen_mapper_channel_v1';
+
+      // Check URL mode for projector popup
+      const urlParams = new URLSearchParams(window.location.search);
+      const isProjectorWindow = urlParams.get('mode') === 'projector';
+
+      // Global Broadcast Channel for dual-window projection
+      const bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+
+      // Color themes for handles
+      const CORNER_COLORS = ['#10b981', '#06b6d4', '#8b5cf6', '#f43f5e']; // TL, TR, BR, BL
+      const CORNER_NAMES = ['TL (左上)', 'TR (右上)', 'BR (右下)', 'BL (左下)'];
+
+      // App State
+      const state = {
+        surfaces: [],
+        selectedId: null,
+        selectedCorner: 0,
+        snapEnabled: true,
+        snapDistance: 16,
+        showHandles: true,
+        isPlaying: true,
+        zoom: 0.5,
+        audioReactive: false,
+        audioLevel: 0,
+        history: [],
+        historyIndex: -1,
+        activeDrag: null // { type: 'corner'|'body', surfaceId, cornerIndex, startX, startY, origPoints }
+      };
+
+      // Audio Reactivity Engine
+      let audioCtx = null;
+      let analyser = null;
+      let audioDataArray = null;
+
+      // DOM Elements
+      const stageContainer = document.getElementById('stageContainer');
+      const surfacesLayer = document.getElementById('surfacesLayer');
+      const overlaySvg = document.getElementById('overlaySvg');
+      const svgPolygonsGroup = document.getElementById('svgPolygonsGroup');
+      const svgSnapGuidesGroup = document.getElementById('svgSnapGuidesGroup');
+      const svgHandlesGroup = document.getElementById('svgHandlesGroup');
+      const surfaceListEl = document.getElementById('surfaceList');
+      const hudTooltip = document.getElementById('hudTooltip');
+      const zoomLevelText = document.getElementById('zoomLevelText');
+      const fpsCounter = document.getElementById('fpsCounter');
+      const activeSurfaceStatus = document.getElementById('activeSurfaceStatus');
+
+      // Inspector Elements
+      const surfaceNameInput = document.getElementById('surfaceNameInput');
+      const surfaceColorInput = document.getElementById('surfaceColorInput');
+      const surfaceOpacityInput = document.getElementById('surfaceOpacityInput');
+      const opacityValText = document.getElementById('opacityValText');
+      const blendModeSelect = document.getElementById('blendModeSelect');
+      const maskShapeSelect = document.getElementById('maskShapeSelect');
+      const brightnessInput = document.getElementById('brightnessInput');
+      const contrastInput = document.getElementById('contrastInput');
+      const brightnessValText = document.getElementById('brightnessValText');
+      const contrastValText = document.getElementById('contrastValText');
+      const mediaUploadBox = document.getElementById('mediaUploadBox');
+      const mediaFileInput = document.getElementById('mediaFileInput');
+
+      /**
+       * 8x8 Linear Equation Solver for Homography
+       */
+      function solve8x8(A, b) {
+        const n = 8;
+        for (let i = 0; i < n; i++) {
+          let maxRow = i;
+          for (let k = i + 1; k < n; k++) {
+            if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+          }
+          [A[i], A[maxRow]] = [A[maxRow], A[i]];
+          [b[i], b[maxRow]] = [b[maxRow], b[i]];
+
+          if (Math.abs(A[i][i]) < 1e-12) return null;
+
+          for (let k = i + 1; k < n; k++) {
+            const factor = A[k][i] / A[i][i];
+            for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+            b[k] -= factor * b[i];
+          }
+        }
+
+        const x = new Array(n);
+        for (let i = n - 1; i >= 0; i--) {
+          let sum = b[i];
+          for (let j = i + 1; j < n; j++) sum -= A[i][j] * x[j];
+          x[i] = sum / A[i][i];
+        }
+        return x;
+      }
+
+      /**
+       * Computes CSS matrix3d transform mapping rectangle (0,0,w,h) to 4 points
+       */
+      function getMatrix3d(w, h, p0, p1, p2, p3) {
+        const src = [
+          { x: 0, y: 0 },
+          { x: w, y: 0 },
+          { x: w, y: h },
+          { x: 0, y: h }
+        ];
+        const dst = [p0, p1, p2, p3];
+
+        const A = [];
+        const b = [];
+        for (let i = 0; i < 4; i++) {
+          const u = src[i].x, v = src[i].y;
+          const x = dst[i].x, y = dst[i].y;
+          A.push([u, v, 1, 0, 0, 0, -u * x, -v * x]);
+          b.push(x);
+          A.push([0, 0, 0, u, v, 1, -u * y, -v * y]);
+          b.push(y);
+        }
+
+        const hMat = solve8x8(A, b);
+        if (!hMat) return 'matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)';
+
+        // Mapping 3x3 homography to CSS matrix3d (column-major)
+        const m = [
+          hMat[0], hMat[3], 0, hMat[6],
+          hMat[1], hMat[4], 0, hMat[7],
+          0,       0,       1, 0,
+          hMat[2], hMat[5], 0, 1
+        ];
+
+        return `matrix3d(${m.map(v => Number.isFinite(v) ? v.toFixed(9) : '0').join(',')})`;
+      }
+
+      /**
+       * Preset Scenes Generator
+       */
+      function getPresetSurfaces(type) {
+        if (type === 'cube') {
+          // Isometric 3D Cube mapping (Top, Left, Right)
+          return [
+            {
+              id: 'surf_top',
+              name: 'キューブ: 天面 (Top)',
+              visible: true,
+              locked: false,
+              color: '#00f0ff',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'neon_grid',
+              mediaUrl: '',
+              points: [
+                { x: 960, y: 150 }, // TL
+                { x: 1360, y: 380 }, // TR
+                { x: 960, y: 610 }, // BR
+                { x: 560, y: 380 }  // BL
+              ]
+            },
+            {
+              id: 'surf_left',
+              name: 'キューブ: 左面 (Left)',
+              visible: true,
+              locked: false,
+              color: '#ff007f',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 85,
+              contrast: 100,
+              source: 'pulse_waves',
+              mediaUrl: '',
+              points: [
+                { x: 560, y: 380 }, // TL
+                { x: 960, y: 610 }, // TR
+                { x: 960, y: 1000 }, // BR
+                { x: 560, y: 770 }  // BL
+              ]
+            },
+            {
+              id: 'surf_right',
+              name: 'キューブ: 右面 (Right)',
+              visible: true,
+              locked: false,
+              color: '#9d4edd',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 75,
+              contrast: 100,
+              source: 'particles',
+              mediaUrl: '',
+              points: [
+                { x: 960, y: 610 }, // TL
+                { x: 1360, y: 380 }, // TR
+                { x: 1360, y: 770 }, // BR
+                { x: 960, y: 1000 }  // BL
+              ]
+            }
+          ];
+        } else if (type === 'columns') {
+          return [
+            {
+              id: 'surf_col1',
+              name: '柱 1 (左ピラー)',
+              visible: true,
+              locked: false,
+              color: '#00f0ff',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'matrix',
+              mediaUrl: '',
+              points: [
+                { x: 300, y: 120 },
+                { x: 700, y: 100 },
+                { x: 680, y: 980 },
+                { x: 320, y: 960 }
+              ]
+            },
+            {
+              id: 'surf_col2',
+              name: '柱 2 (右ピラー)',
+              visible: true,
+              locked: false,
+              color: '#f59e0b',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'kaleidoscope',
+              mediaUrl: '',
+              points: [
+                { x: 1220, y: 100 },
+                { x: 1620, y: 120 },
+                { x: 1600, y: 960 },
+                { x: 1240, y: 980 }
+              ]
+            }
+          ];
+        } else if (type === 'grid') {
+          return [
+            {
+              id: 'surf_g1',
+              name: 'グリッド 1 (左上)',
+              visible: true,
+              locked: false,
+              color: '#10b981',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'neon_grid',
+              mediaUrl: '',
+              points: [{ x: 160, y: 80 }, { x: 920, y: 100 }, { x: 900, y: 500 }, { x: 180, y: 480 }]
+            },
+            {
+              id: 'surf_g2',
+              name: 'グリッド 2 (右上)',
+              visible: true,
+              locked: false,
+              color: '#06b6d4',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'clock',
+              mediaUrl: '',
+              points: [{ x: 1000, y: 100 }, { x: 1760, y: 80 }, { x: 1740, y: 480 }, { x: 1020, y: 500 }]
+            },
+            {
+              id: 'surf_g3',
+              name: 'グリッド 3 (左下)',
+              visible: true,
+              locked: false,
+              color: '#8b5cf6',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'calibration',
+              mediaUrl: '',
+              points: [{ x: 180, y: 560 }, { x: 900, y: 580 }, { x: 920, y: 980 }, { x: 160, y: 1000 }]
+            },
+            {
+              id: 'surf_g4',
+              name: 'グリッド 4 (右下)',
+              visible: true,
+              locked: false,
+              color: '#f43f5e',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'particles',
+              mediaUrl: '',
+              points: [{ x: 1020, y: 580 }, { x: 1740, y: 560 }, { x: 1760, y: 1000 }, { x: 1000, y: 980 }]
+            }
+          ];
+        } else {
+          // Single Keystone screen
+          return [
+            {
+              id: 'surf_single',
+              name: 'メインスクリーン',
+              visible: true,
+              locked: false,
+              color: '#00f0ff',
+              opacity: 1,
+              blendMode: 'normal',
+              mask: 'none',
+              brightness: 100,
+              contrast: 100,
+              source: 'neon_grid',
+              mediaUrl: '',
+              points: [
+                { x: 240, y: 140 },
+                { x: 1680, y: 140 },
+                { x: 1600, y: 940 },
+                { x: 320, y: 940 }
+              ]
+            }
+          ];
+        }
+      }
+
+      /**
+       * Initialization
+       */
+      function init() {
+        // Load stored state or default cube preset
+        const saved = localStorage.getItem('lumen_mapper_project');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            state.surfaces = data.surfaces || getPresetSurfaces('cube');
+          } catch (e) {
+            state.surfaces = getPresetSurfaces('cube');
+          }
+        } else {
+          state.surfaces = getPresetSurfaces('cube');
+        }
+
+        if (state.surfaces.length > 0) {
+          state.selectedId = state.surfaces[0].id;
+        }
+
+        // Projector Window Specific Setup
+        if (isProjectorWindow) {
+          document.body.classList.add('mode-projector');
+          // Add floating auto-fading notification
+          const banner = document.createElement('div');
+          banner.className = 'projector-banner';
+          banner.innerHTML = `
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+            <b>プロジェクター出力中</b> (F11で全画面化 / エディタとリアルタイム同期)
+          `;
+          document.body.appendChild(banner);
+          setTimeout(() => banner.classList.add('fade-out'), 3500);
+
+          // Listen for updates from main window
+          bc.onmessage = (e) => {
+            if (e.data && e.data.type === 'SYNC_STATE') {
+              state.surfaces = e.data.surfaces;
+              renderSurfaces();
+            }
+          };
+          // Request initial state from opener
+          bc.postMessage({ type: 'REQUEST_STATE' });
+        } else {
+          // Controller Window Setup
+          setupBroadcastChannel();
+          setupEventListeners();
+          setupAudioReactivity();
+          pushHistory();
+          updateUI();
+        }
+
+        buildDOMSurfaces();
+        fitStageToWindow();
+        window.addEventListener('resize', fitStageToWindow);
+        requestAnimationFrame(animationLoop);
+      }
+
+      /**
+       * Setup BroadcastChannel for Dual Window Real-time Sync
+       */
+      function setupBroadcastChannel() {
+        bc.onmessage = (e) => {
+          if (e.data && e.data.type === 'REQUEST_STATE') {
+            broadcastState();
+          }
+        };
+      }
+
+      function broadcastState() {
+        bc.postMessage({
+          type: 'SYNC_STATE',
+          surfaces: state.surfaces
+        });
+      }
+
+      /**
+       * Create DOM elements for surfaces
+       */
+      function buildDOMSurfaces() {
+        surfacesLayer.innerHTML = '';
+        state.surfaces.forEach(surf => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'surface-element';
+          wrapper.id = 'dom_' + surf.id;
+          wrapper.style.width = SURFACE_RES_W + 'px';
+          wrapper.style.height = SURFACE_RES_H + 'px';
+
+          // Canvas for generative or calibration rendering
+          const canvas = document.createElement('canvas');
+          canvas.width = SURFACE_RES_W;
+          canvas.height = SURFACE_RES_H;
+          wrapper.appendChild(canvas);
+
+          // Video element for media or webcam
+          const video = document.createElement('video');
+          video.autoplay = true;
+          video.loop = true;
+          video.muted = true;
+          video.playsInline = true;
+          video.style.display = 'none';
+          wrapper.appendChild(video);
+
+          // Image element
+          const img = document.createElement('img');
+          img.style.display = 'none';
+          wrapper.appendChild(img);
+
+          surfacesLayer.appendChild(wrapper);
+        });
+
+        renderSurfaces();
+      }
+
+      /**
+       * Update Matrix3d warping transform for all surfaces
+       */
+      function renderSurfaces() {
+        state.surfaces.forEach(surf => {
+          let wrapper = document.getElementById('dom_' + surf.id);
+          if (!wrapper) {
+            buildDOMSurfaces();
+            wrapper = document.getElementById('dom_' + surf.id);
+            if (!wrapper) return;
+          }
+
+          if (!surf.visible) {
+            wrapper.style.display = 'none';
+            return;
+          }
+          wrapper.style.display = 'block';
+
+          // Homography Warping
+          const p = surf.points;
+          const transformStr = getMatrix3d(SURFACE_RES_W, SURFACE_RES_H, p[0], p[1], p[2], p[3]);
+          wrapper.style.transform = transformStr;
+
+          // Blending & Opacity & Filters
+          wrapper.style.opacity = surf.opacity;
+          wrapper.style.mixBlendMode = surf.blendMode;
+          wrapper.style.filter = `brightness(${surf.brightness}%) contrast(${surf.contrast}%)`;
+
+          // Masking
+          if (surf.mask === 'circle') {
+            wrapper.style.clipPath = 'ellipse(50% 50% at 50% 50%)';
+          } else if (surf.mask === 'vignette') {
+            wrapper.style.maskImage = 'radial-gradient(ellipse at center, black 50%, transparent 95%)';
+            wrapper.style.webkitMaskImage = 'radial-gradient(ellipse at center, black 50%, transparent 95%)';
+            wrapper.style.clipPath = 'none';
+          } else if (surf.mask === 'diamond') {
+            wrapper.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+          } else {
+            wrapper.style.clipPath = 'none';
+            wrapper.style.maskImage = 'none';
+            wrapper.style.webkitMaskImage = 'none';
+          }
+
+          // Content type display toggles
+          const canvas = wrapper.querySelector('canvas');
+          const video = wrapper.querySelector('video');
+          const img = wrapper.querySelector('img');
+
+          if (surf.source === 'media') {
+            if (surf.mediaUrl && surf.mediaUrl.match(/\.(mp4|webm|mov)$/i)) {
+              canvas.style.display = 'none';
+              img.style.display = 'none';
+              video.style.display = 'block';
+              if (video.src !== surf.mediaUrl) video.src = surf.mediaUrl;
+            } else if (surf.mediaUrl) {
+              canvas.style.display = 'none';
+              video.style.display = 'none';
+              img.style.display = 'block';
+              if (img.src !== surf.mediaUrl) img.src = surf.mediaUrl;
+            } else {
+              canvas.style.display = 'block';
+              video.style.display = 'none';
+              img.style.display = 'none';
+            }
+          } else if (surf.source === 'webcam') {
+            canvas.style.display = 'none';
+            img.style.display = 'none';
+            video.style.display = 'block';
+          } else {
+            canvas.style.display = 'block';
+            video.style.display = 'none';
+            img.style.display = 'none';
+          }
+        });
+
+        if (!isProjectorWindow) {
+          renderOverlaySvg();
+        }
+      }
+
+      /**
+       * Render Overlay SVG (Wireframes, Polygon borders, Corner Handles, Snapping indicators)
+       */
+      function renderOverlaySvg() {
+        if (!state.showHandles) {
+          svgPolygonsGroup.innerHTML = '';
+          svgHandlesGroup.innerHTML = '';
+          svgSnapGuidesGroup.innerHTML = '';
+          return;
+        }
+
+        let polyHtml = '';
+        let handlesHtml = '';
+
+        state.surfaces.forEach(surf => {
+          if (!surf.visible) return;
+          const p = surf.points;
+          const ptsStr = `${p[0].x},${p[0].y} ${p[1].x},${p[1].y} ${p[2].x},${p[2].y} ${p[3].x},${p[3].y}`;
+          const isSelected = surf.id === state.selectedId;
+
+          // Wireframe polygon
+          polyHtml += `
+            <polygon
+              points="${ptsStr}"
+              class="wireframe-polygon ${isSelected ? 'active' : 'inactive'}"
+              style="stroke: ${isSelected ? surf.color : 'rgba(255,255,255,0.3)'};"
+              data-surface-id="${surf.id}"
+            />
+          `;
+
+          // Surface label in center
+          const cx = (p[0].x + p[1].x + p[2].x + p[3].x) / 4;
+          const cy = (p[0].y + p[1].y + p[2].y + p[3].y) / 4;
+
+          polyHtml += `
+            <text x="${cx}" y="${cy}" fill="${surf.color}" font-size="14" font-weight="bold" text-anchor="middle" dominant-baseline="middle" pointer-events="none" opacity="${isSelected ? 0.9 : 0.4}">
+              ${surf.name}
+            </text>
+          `;
+
+          // Handles (only for selected surface or subtly for active manipulation)
+          if (isSelected && !surf.locked) {
+            // Center move handle
+            handlesHtml += `
+              <circle cx="${cx}" cy="${cy}" r="7" class="center-handle" data-surface-id="${surf.id}" data-type="center" title="面全体を移動" />
+            `;
+
+            // Corner handles
+            for (let i = 0; i < 4; i++) {
+              const pt = p[i];
+              const isCornerSelected = state.selectedCorner === i;
+              handlesHtml += `
+                <circle
+                  cx="${pt.x}"
+                  cy="${pt.y}"
+                  r="7"
+                  fill="${CORNER_COLORS[i]}"
+                  class="corner-handle ${isCornerSelected ? 'selected' : ''}"
+                  data-surface-id="${surf.id}"
+                  data-corner-index="${i}"
+                  data-type="corner"
+                />
+              `;
+            }
+          }
+        });
+
+        svgPolygonsGroup.innerHTML = polyHtml;
+        svgHandlesGroup.innerHTML = handlesHtml;
+      }
+
+      /**
+       * Animation Loop for Generative Visuals (60 FPS)
+       */
+      let lastFrameTime = performance.now();
+      let frameCount = 0;
+      let lastFpsUpdate = performance.now();
+
+      function animationLoop(timestamp) {
+        const dt = (timestamp - lastFrameTime) / 1000;
+        lastFrameTime = timestamp;
+
+        // FPS counter
+        frameCount++;
+        if (timestamp - lastFpsUpdate >= 1000) {
+          fpsCounter.textContent = `${frameCount} FPS`;
+          frameCount = 0;
+          lastFpsUpdate = timestamp;
+        }
+
+        // Update audio level if active
+        if (state.audioReactive && analyser && audioDataArray) {
+          analyser.getByteFrequencyData(audioDataArray);
+          let sum = 0;
+          for (let i = 0; i < audioDataArray.length; i++) sum += audioDataArray[i];
+          state.audioLevel = sum / (audioDataArray.length * 255);
+        } else {
+          // subtle simulated beat pulse
+          state.audioLevel = 0.2 + 0.15 * Math.sin(timestamp * 0.005);
+        }
+
+        // Render each surface canvas
+        state.surfaces.forEach(surf => {
+          if (!surf.visible) return;
+          const wrapper = document.getElementById('dom_' + surf.id);
+          if (!wrapper) return;
+          const canvas = wrapper.querySelector('canvas');
+          if (!canvas || canvas.style.display === 'none') return;
+          const ctx = canvas.getContext('2d');
+
+          drawSurfaceContent(ctx, surf, timestamp);
+        });
+
+        requestAnimationFrame(animationLoop);
+      }
+
+      /**
+       * Generative Visual Engines
+       */
+      function drawSurfaceContent(ctx, surf, time) {
+        const w = SURFACE_RES_W;
+        const h = SURFACE_RES_H;
+        const t = time * 0.001;
+        const beat = state.audioLevel;
+
+        ctx.save();
+
+        if (surf.source === 'neon_grid') {
+          // Cyberpunk Horizon 3D Grid
+          ctx.fillStyle = '#0a0a14';
+          ctx.fillRect(0, 0, w, h);
+
+          // Glowing Sun / Circle
+          const sunRadius = 90 + beat * 30;
+          const grad = ctx.createRadialGradient(w / 2, h * 0.45, 10, w / 2, h * 0.45, sunRadius);
+          grad.addColorStop(0, '#ff007f');
+          grad.addColorStop(0.6, '#ffaa00');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(w / 2, h * 0.45, sunRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Horizontal lines of sun
+          ctx.strokeStyle = '#0a0a14';
+          ctx.lineWidth = 3;
+          for (let y = h * 0.35; y < h * 0.55; y += 8) {
+            ctx.beginPath();
+            ctx.moveTo(w * 0.3, y);
+            ctx.lineTo(w * 0.7, y);
+            ctx.stroke();
+          }
+
+          // Horizon line
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.moveTo(0, h * 0.5);
+          ctx.lineTo(w, h * 0.5);
+          ctx.stroke();
+
+          // Perspective Grid Lines
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          ctx.shadowBlur = 8;
+
+          // Radial perspective rays
+          const vanishingX = w / 2;
+          const vanishingY = h * 0.5;
+          for (let x = -w; x <= w * 2; x += 60) {
+            ctx.beginPath();
+            ctx.moveTo(vanishingX, vanishingY);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+          }
+
+          // Moving horizontal depth lines
+          const gridSpeed = (t * 1.5) % 1;
+          for (let i = 0; i < 15; i++) {
+            const depth = Math.pow((i + gridSpeed) / 15, 2.5);
+            const ly = vanishingY + depth * (h - vanishingY);
+            ctx.lineWidth = 1 + depth * 2;
+            ctx.beginPath();
+            ctx.moveTo(0, ly);
+            ctx.lineTo(w, ly);
+            ctx.stroke();
+          }
+        } else if (surf.source === 'pulse_waves') {
+          // Audio Reactive Geometric Pulse Waves
+          ctx.fillStyle = '#05050a';
+          ctx.fillRect(0, 0, w, h);
+
+          const cx = w / 2;
+          const cy = h / 2;
+          const rings = 8;
+
+          for (let i = 0; i < rings; i++) {
+            const progress = (t * 0.4 + i / rings) % 1;
+            const radius = progress * (w * 0.55);
+            const alpha = 1 - progress;
+
+            ctx.strokeStyle = `hsla(${((i * 45) + t * 40) % 360}, 100%, 65%, ${alpha})`;
+            ctx.lineWidth = 3 + beat * 12;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = 20;
+
+            ctx.beginPath();
+            const sides = 6;
+            for (let j = 0; j <= sides; j++) {
+              const angle = (j / sides) * Math.PI * 2 + t * 0.5 * (i % 2 === 0 ? 1 : -1);
+              const r = radius * (1 + 0.15 * Math.sin(angle * 4 + t * 3) * beat);
+              const px = cx + Math.cos(angle) * r;
+              const py = cy + Math.sin(angle) * r;
+              if (j === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+
+          // Center energetic core
+          const coreR = 30 + beat * 40;
+          ctx.fillStyle = '#fff';
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 30;
+          ctx.beginPath();
+          ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (surf.source === 'particles') {
+          // Particle Constellation Network
+          ctx.fillStyle = 'rgba(6, 8, 16, 0.3)';
+          ctx.fillRect(0, 0, w, h);
+
+          if (!surf._particles) {
+            surf._particles = [];
+            for (let i = 0; i < 60; i++) {
+              surf._particles.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
+                r: 2 + Math.random() * 3
+              });
+            }
+          }
+
+          const pts = surf._particles;
+          pts.forEach(p => {
+            p.x += p.vx * (1 + beat * 2);
+            p.y += p.vy * (1 + beat * 2);
+            if (p.x < 0) p.x = w;
+            if (p.x > w) p.x = 0;
+            if (p.y < 0) p.y = h;
+            if (p.y > h) p.y = 0;
+          });
+
+          // Draw links
+          ctx.lineWidth = 1;
+          for (let i = 0; i < pts.length; i++) {
+            for (let j = i + 1; j < pts.length; j++) {
+              const dx = pts[i].x - pts[j].x;
+              const dy = pts[i].y - pts[j].y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 110) {
+                const alpha = (1 - dist / 110) * (0.6 + beat * 0.4);
+                ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.moveTo(pts[i].x, pts[i].y);
+                ctx.lineTo(pts[j].x, pts[j].y);
+                ctx.stroke();
+              }
+            }
+          }
+
+          // Draw particle dots
+          pts.forEach(p => {
+            ctx.fillStyle = '#ff007f';
+            ctx.shadowColor = '#ff007f';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r * (1 + beat), 0, Math.PI * 2);
+            ctx.fill();
+          });
+        } else if (surf.source === 'matrix') {
+          // Digital Matrix Rain
+          ctx.fillStyle = 'rgba(0, 5, 2, 0.15)';
+          ctx.fillRect(0, 0, w, h);
+
+          if (!surf._matrixDrops) {
+            const cols = Math.floor(w / 18);
+            surf._matrixDrops = new Array(cols).fill(1);
+          }
+
+          ctx.fillStyle = '#00ff66';
+          ctx.font = '15px monospace';
+          const chars = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+
+          for (let i = 0; i < surf._matrixDrops.length; i++) {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            const x = i * 18;
+            const y = surf._matrixDrops[i] * 18;
+
+            ctx.fillStyle = Math.random() > 0.85 ? '#ffffff' : '#00ff66';
+            ctx.fillText(char, x, y);
+
+            if (y > h && Math.random() > 0.975) {
+              surf._matrixDrops[i] = 0;
+            }
+            surf._matrixDrops[i]++;
+          }
+        } else if (surf.source === 'kaleidoscope') {
+          // Rotating Kaleidoscope Mandala
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, w, h);
+
+          ctx.translate(w / 2, h / 2);
+          const petals = 12;
+          for (let i = 0; i < petals; i++) {
+            ctx.save();
+            ctx.rotate((i * Math.PI * 2) / petals + t * 0.5);
+
+            ctx.strokeStyle = `hsl(${(t * 50 + i * 30) % 360}, 100%, 65%)`;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = 15;
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(
+              80 + beat * 50, -60,
+              180 + beat * 60, 60,
+              260 + beat * 40, 0
+            );
+            ctx.stroke();
+
+            // Inner geometry
+            ctx.fillStyle = `hsla(${(t * 50 + i * 30 + 180) % 360}, 100%, 50%, 0.3)`;
+            ctx.beginPath();
+            ctx.arc(120, 0, 30 + beat * 20, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+          }
+        } else if (surf.source === 'clock') {
+          // Large Digital Clock
+          ctx.fillStyle = '#0a0a10';
+          ctx.fillRect(0, 0, w, h);
+
+          const now = new Date();
+          const pad = n => String(n).padStart(2, '0');
+          const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+          const msStr = `.${String(Math.floor(now.getMilliseconds() / 10)).padStart(2, '0')}`;
+          const dateStr = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} PROJECTION LIVE`;
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // Glowing Date
+          ctx.font = '700 24px monospace';
+          ctx.fillStyle = '#9494a8';
+          ctx.fillText(dateStr, w / 2, h * 0.3);
+
+          // Big Clock
+          ctx.font = '900 96px monospace';
+          ctx.fillStyle = '#00f0ff';
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 25;
+          ctx.fillText(timeStr, w / 2 - 30, h * 0.52);
+
+          // Milliseconds
+          ctx.font = '700 48px monospace';
+          ctx.fillStyle = '#ff007f';
+          ctx.shadowColor = '#ff007f';
+          ctx.fillText(msStr, w / 2 + 250, h * 0.53);
+
+          // Outer frame
+          ctx.strokeStyle = '#2e2e3e';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(40, 40, w - 80, h - 80);
+        } else if (surf.source === 'calibration') {
+          // Calibration 10x10 Checkerboard Grid & Center Crosshairs
+          ctx.fillStyle = '#111';
+          ctx.fillRect(0, 0, w, h);
+
+          const cols = 10;
+          const rows = 10;
+          const cw = w / cols;
+          const ch = h / rows;
+
+          // Checkered background
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              if ((r + c) % 2 === 0) {
+                ctx.fillStyle = '#222';
+                ctx.fillRect(c * cw, r * ch, cw, ch);
+              }
+              // Cell border
+              ctx.strokeStyle = '#444';
+              ctx.lineWidth = 1;
+              ctx.strokeRect(c * cw, r * ch, cw, ch);
+
+              // Coordinates label
+              ctx.fillStyle = '#777';
+              ctx.font = '12px monospace';
+              ctx.fillText(`${c},${r}`, c * cw + 6, r * ch + 16);
+            }
+          }
+
+          // Diagonals
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 0); ctx.lineTo(w, h);
+          ctx.moveTo(w, 0); ctx.lineTo(0, h);
+          ctx.stroke();
+
+          // Center crosshair & concentric circles
+          ctx.strokeStyle = '#ffff00';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(w / 2, h / 2, 80, 0, Math.PI * 2);
+          ctx.arc(w / 2, h / 2, 160, 0, Math.PI * 2);
+          ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h);
+          ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2);
+          ctx.stroke();
+
+          // Corner text labels
+          ctx.font = 'bold 22px monospace';
+          ctx.fillStyle = '#10b981'; ctx.fillText('TL (0,0)', 20, 36);
+          ctx.fillStyle = '#06b6d4'; ctx.fillText('TR (W,0)', w - 140, 36);
+          ctx.fillStyle = '#8b5cf6'; ctx.fillText('BR (W,H)', w - 140, h - 20);
+          ctx.fillStyle = '#f43f5e'; ctx.fillText('BL (0,H)', 20, h - 20);
+        } else if (surf.source === 'smpte') {
+          // SMPTE Color Calibration Bars
+          const bars = ['#bfbfbf', '#bfbf00', '#00bfbf', '#00bf00', '#bf00bf', '#bf0000', '#0000bf'];
+          const barW = w / bars.length;
+          bars.forEach((color, i) => {
+            ctx.fillStyle = color;
+            ctx.fillRect(i * barW, 0, barW, h * 0.7);
+          });
+
+          // Gradient section
+          const grad = ctx.createLinearGradient(0, h * 0.7, w, h * 0.7);
+          grad.addColorStop(0, '#000');
+          grad.addColorStop(1, '#fff');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, h * 0.7, w, h * 0.15);
+
+          // Bottom black/white patches
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, h * 0.85, w / 3, h * 0.15);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(w / 3, h * 0.85, w / 3, h * 0.15);
+          ctx.fillStyle = '#131313';
+          ctx.fillRect((w * 2) / 3, h * 0.85, w / 3, h * 0.15);
+        }
+
+        ctx.restore();
+      }
+
+      /**
+       * Interactive Event Listeners (Mouse, Touch, Keyboard)
+       */
+      function setupEventListeners() {
+        // Overlay SVG Pointer Events for Handles & Whole Surface Translation
+        overlaySvg.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+
+        // Keyboard navigation and precision nudging
+        window.addEventListener('keydown', onKeyDown);
+
+        // UI Buttons
+        document.getElementById('addSurfaceBtn').addEventListener('click', addNewSurface);
+        document.getElementById('duplicateSurfaceBtn').addEventListener('click', duplicateActiveSurface);
+        document.getElementById('deleteSurfaceBtn').addEventListener('click', deleteActiveSurface);
+        document.getElementById('snapToggleBtn').addEventListener('click', toggleSnap);
+        document.getElementById('audioToggleBtn').addEventListener('click', toggleAudio);
+        document.getElementById('undoBtn').addEventListener('click', undo);
+        document.getElementById('redoBtn').addEventListener('click', redo);
+        document.getElementById('presetSelect').addEventListener('change', onPresetChange);
+        document.getElementById('presentBtn').addEventListener('click', toggleFullscreenPresent);
+        document.getElementById('openProjectorBtn').addEventListener('click', openProjectorPopup);
+        document.getElementById('toggleHandlesBtn').addEventListener('click', toggleHandles);
+
+        // Zoom buttons
+        document.getElementById('zoomInBtn').addEventListener('click', () => setZoom(state.zoom + 0.1));
+        document.getElementById('zoomOutBtn').addEventListener('click', () => setZoom(state.zoom - 0.1));
+        document.getElementById('zoomFitBtn').addEventListener('click', fitStageToWindow);
+
+        // Save / Export Modal
+        document.getElementById('saveExportBtn').addEventListener('click', () => {
+          document.getElementById('saveModal').classList.add('open');
+        });
+        document.getElementById('closeSaveBtn').addEventListener('click', () => {
+          document.getElementById('saveModal').classList.remove('open');
+        });
+        document.getElementById('saveLocalBtn').addEventListener('click', saveToLocal);
+        document.getElementById('exportJsonBtn').addEventListener('click', exportJson);
+        document.getElementById('importJsonInput').addEventListener('change', importJson);
+
+        // Help Modal
+        document.getElementById('helpBtn').addEventListener('click', () => {
+          document.getElementById('helpModal').classList.add('open');
+        });
+        document.getElementById('closeHelpBtn').addEventListener('click', () => {
+          document.getElementById('helpModal').classList.remove('open');
+        });
+        document.getElementById('confirmHelpBtn').addEventListener('click', () => {
+          document.getElementById('helpModal').classList.remove('open');
+        });
+
+        // Surface Inspector Form Bindings
+        surfaceNameInput.addEventListener('input', (e) => {
+          const s = getActiveSurface();
+          if (s) { s.name = e.target.value; updateUI(); broadcastState(); }
+        });
+        surfaceColorInput.addEventListener('input', (e) => {
+          const s = getActiveSurface();
+          if (s) { s.color = e.target.value; renderSurfaces(); updateUI(); broadcastState(); }
+        });
+        surfaceOpacityInput.addEventListener('input', (e) => {
+          const s = getActiveSurface();
+          if (s) {
+            s.opacity = e.target.value / 100;
+            opacityValText.textContent = e.target.value + '%';
+            renderSurfaces();
+            broadcastState();
+          }
+        });
+        blendModeSelect.addEventListener('change', (e) => {
+          const s = getActiveSurface();
+          if (s) { s.blendMode = e.target.value; renderSurfaces(); broadcastState(); }
+        });
+        maskShapeSelect.addEventListener('change', (e) => {
+          const s = getActiveSurface();
+          if (s) { s.mask = e.target.value; renderSurfaces(); broadcastState(); }
+        });
+        brightnessInput.addEventListener('input', (e) => {
+          const s = getActiveSurface();
+          if (s) {
+            s.brightness = e.target.value;
+            brightnessValText.textContent = e.target.value + '%';
+            renderSurfaces();
+            broadcastState();
+          }
+        });
+        contrastInput.addEventListener('input', (e) => {
+          const s = getActiveSurface();
+          if (s) {
+            s.contrast = e.target.value;
+            contrastValText.textContent = e.target.value + '%';
+            renderSurfaces();
+            broadcastState();
+          }
+        });
+
+        // Source cards selector
+        document.querySelectorAll('.source-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const s = getActiveSurface();
+            if (!s) return;
+            const src = btn.dataset.source;
+            s.source = src;
+
+            if (src === 'webcam') {
+              enableWebcam(s);
+            }
+
+            mediaUploadBox.style.display = src === 'media' ? 'block' : 'none';
+
+            document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderSurfaces();
+            updateUI();
+            broadcastState();
+          });
+        });
+
+        // Media file upload
+        mediaFileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          const s = getActiveSurface();
+          if (file && s) {
+            s.mediaUrl = URL.createObjectURL(file);
+            renderSurfaces();
+            broadcastState();
+          }
+        });
+
+        // Coordinate inputs
+        for (let i = 0; i < 4; i++) {
+          const xIn = document.getElementById(`coord-p${i}-x`);
+          const yIn = document.getElementById(`coord-p${i}-y`);
+          xIn.addEventListener('change', () => {
+            const s = getActiveSurface();
+            if (s) { s.points[i].x = parseFloat(xIn.value) || 0; renderSurfaces(); broadcastState(); }
+          });
+          yIn.addEventListener('change', () => {
+            const s = getActiveSurface();
+            if (s) { s.points[i].y = parseFloat(yIn.value) || 0; renderSurfaces(); broadcastState(); }
+          });
+        }
+
+        document.getElementById('resetCornersBtn').addEventListener('click', resetActiveCorners);
+        document.getElementById('centerSurfaceBtn').addEventListener('click', centerActiveSurface);
+        document.getElementById('fitStageBtn').addEventListener('click', fitActiveSurfaceToStage);
+      }
+
+      /**
+       * Pointer Down (SVG Handles / Polygon selection)
+       */
+      function onPointerDown(e) {
+        const target = e.target;
+        const surfaceId = target.dataset.surfaceId;
+
+        if (surfaceId) {
+          selectSurface(surfaceId);
+        }
+
+        const surf = getActiveSurface();
+        if (!surf || surf.locked) return;
+
+        const stageCoords = getStageCoordinates(e);
+
+        if (target.dataset.type === 'corner') {
+          const cornerIdx = parseInt(target.dataset.cornerIndex, 10);
+          state.selectedCorner = cornerIdx;
+          state.activeDrag = {
+            type: 'corner',
+            surfaceId: surf.id,
+            cornerIndex: cornerIdx,
+            startX: stageCoords.x,
+            startY: stageCoords.y,
+            origPoint: { ...surf.points[cornerIdx] }
+          };
+          target.setPointerCapture(e.pointerId);
+          showHudTooltip(e.clientX, e.clientY, cornerIdx, surf.points[cornerIdx]);
+          e.preventDefault();
+        } else if (target.dataset.type === 'center' || target.classList.contains('wireframe-polygon')) {
+          // Whole surface translation
+          state.activeDrag = {
+            type: 'body',
+            surfaceId: surf.id,
+            startX: stageCoords.x,
+            startY: stageCoords.y,
+            origPoints: surf.points.map(p => ({ ...p }))
+          };
+          e.preventDefault();
+        }
+      }
+
+      /**
+       * Pointer Move (Handle Dragging with Magnetic Snapping)
+       */
+      function onPointerMove(e) {
+        if (!state.activeDrag) return;
+
+        const surf = state.surfaces.find(s => s.id === state.activeDrag.surfaceId);
+        if (!surf) return;
+
+        const stageCoords = getStageCoordinates(e);
+        const dx = stageCoords.x - state.activeDrag.startX;
+        const dy = stageCoords.y - state.activeDrag.startY;
+
+        if (state.activeDrag.type === 'corner') {
+          const idx = state.activeDrag.cornerIndex;
+          let newX = Math.round(state.activeDrag.origPoint.x + dx);
+          let newY = Math.round(state.activeDrag.origPoint.y + dy);
+
+          // Magnetic Snapping check against other surface corners
+          svgSnapGuidesGroup.innerHTML = '';
+          if (state.snapEnabled) {
+            let snapped = false;
+            for (const other of state.surfaces) {
+              if (other.id === surf.id || !other.visible) continue;
+              for (const pt of other.points) {
+                const dist = Math.hypot(newX - pt.x, newY - pt.y);
+                if (dist < state.snapDistance) {
+                  newX = pt.x;
+                  newY = pt.y;
+                  snapped = true;
+                  // Draw snap guide ring
+                  svgSnapGuidesGroup.innerHTML = `
+                    <circle cx="${pt.x}" cy="${pt.y}" r="12" class="snap-ring" />
+                    <line x1="${pt.x}" y1="0" x2="${pt.x}" y2="${STAGE_HEIGHT}" class="snap-guide-line" />
+                    <line x1="0" y1="${pt.y}" x2="${STAGE_WIDTH}" y2="${pt.y}" class="snap-guide-line" />
+                  `;
+                  break;
+                }
+              }
+              if (snapped) break;
+            }
+          }
+
+          surf.points[idx].x = newX;
+          surf.points[idx].y = newY;
+
+          showHudTooltip(e.clientX, e.clientY, idx, surf.points[idx]);
+          renderSurfaces();
+          updateInspectorCoords();
+          broadcastState();
+        } else if (state.activeDrag.type === 'body') {
+          // Translate all 4 corners
+          for (let i = 0; i < 4; i++) {
+            surf.points[i].x = Math.round(state.activeDrag.origPoints[i].x + dx);
+            surf.points[i].y = Math.round(state.activeDrag.origPoints[i].y + dy);
+          }
+          renderSurfaces();
+          updateInspectorCoords();
+          broadcastState();
+        }
+      }
+
+      /**
+       * Pointer Up
+       */
+      function onPointerUp(e) {
+        if (state.activeDrag) {
+          state.activeDrag = null;
+          svgSnapGuidesGroup.innerHTML = '';
+          hudTooltip.style.display = 'none';
+          pushHistory();
+          autoSaveLocal();
+        }
+      }
+
+      /**
+       * Converts client mouse event coordinates to stage coordinates (0..1920, 0..1080)
+       */
+      function getStageCoordinates(e) {
+        const rect = stageContainer.getBoundingClientRect();
+        const scaleX = STAGE_WIDTH / rect.width;
+        const scaleY = STAGE_HEIGHT / rect.height;
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        };
+      }
+
+      function showHudTooltip(clientX, clientY, cornerIdx, pt) {
+        hudTooltip.style.display = 'block';
+        hudTooltip.style.left = (clientX + 14) + 'px';
+        hudTooltip.style.top = (clientY - 26) + 'px';
+        hudTooltip.textContent = `${CORNER_NAMES[cornerIdx]}: X: ${pt.x}, Y: ${pt.y}`;
+      }
+
+      /**
+       * Keyboard Shortcuts
+       */
+      function onKeyDown(e) {
+        // Ignore when editing inputs
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+        const surf = getActiveSurface();
+
+        // Nudge with arrow keys (1px or 10px with Shift)
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && surf && !surf.locked) {
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : 1;
+          const idx = state.selectedCorner;
+          if (e.key === 'ArrowUp') surf.points[idx].y -= step;
+          if (e.key === 'ArrowDown') surf.points[idx].y += step;
+          if (e.key === 'ArrowLeft') surf.points[idx].x -= step;
+          if (e.key === 'ArrowRight') surf.points[idx].x += step;
+
+          renderSurfaces();
+          updateInspectorCoords();
+          broadcastState();
+          autoSaveLocal();
+          return;
+        }
+
+        // Tab: Cycle corners
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          state.selectedCorner = (state.selectedCorner + 1) % 4;
+          renderOverlaySvg();
+          return;
+        }
+
+        // F: Toggle Fullscreen Presentation
+        if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          toggleFullscreenPresent();
+          return;
+        }
+
+        // H: Toggle Handles
+        if (e.key === 'h' || e.key === 'H') {
+          e.preventDefault();
+          toggleHandles();
+          return;
+        }
+
+        // Space: Pause/Resume
+        if (e.key === ' ') {
+          e.preventDefault();
+          state.isPlaying = !state.isPlaying;
+          return;
+        }
+
+        // Undo / Redo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+          e.preventDefault();
+          undo();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
+          e.preventDefault();
+          redo();
+          return;
+        }
+
+        // Number keys 1-9: Select surface
+        const num = parseInt(e.key, 10);
+        if (!isNaN(num) && num >= 1 && num <= state.surfaces.length) {
+          selectSurface(state.surfaces[num - 1].id);
+          return;
+        }
+
+        // Delete: Remove surface
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          deleteActiveSurface();
+          return;
+        }
+
+        // ?: Help
+        if (e.key === '?') {
+          document.getElementById('helpModal').classList.toggle('open');
+          return;
+        }
+      }
+
+      /**
+       * Audio Reactivity (Microphone / AudioContext)
+       */
+      async function toggleAudio() {
+        const btn = document.getElementById('audioToggleBtn');
+        if (!state.audioReactive) {
+          try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const source = audioCtx.createMediaStreamSource(stream);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 128;
+            source.connect(analyser);
+            audioDataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            state.audioReactive = true;
+            btn.classList.add('btn-active');
+            btn.innerHTML = `
+              <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+              Audio ON
+            `;
+          } catch (err) {
+            alert('マイクのアクセスが許可されませんでした。');
+          }
+        } else {
+          state.audioReactive = false;
+          btn.classList.remove('btn-active');
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+            Audio 反応
+          `;
+        }
+      }
+
+      /**
+       * Webcam Stream
+       */
+      async function enableWebcam(surf) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+          const wrapper = document.getElementById('dom_' + surf.id);
+          if (wrapper) {
+            const video = wrapper.querySelector('video');
+            video.srcObject = stream;
+            video.play();
+          }
+        } catch (e) {
+          alert('カメラの取得に失敗しました。');
+        }
+      }
+
+      /**
+       * Surface Operations (Add, Duplicate, Delete, Select)
+       */
+      function addNewSurface() {
+        const id = 'surf_' + Date.now();
+        const num = state.surfaces.length + 1;
+        const color = CORNER_COLORS[(num - 1) % CORNER_COLORS.length];
+
+        const cx = STAGE_WIDTH / 2;
+        const cy = STAGE_HEIGHT / 2;
+        const hw = 300;
+        const hh = 200;
+
+        const newSurf = {
+          id: id,
+          name: `Surface ${num}`,
+          visible: true,
+          locked: false,
+          color: color,
+          opacity: 1,
+          blendMode: 'normal',
+          mask: 'none',
+          brightness: 100,
+          contrast: 100,
+          source: 'neon_grid',
+          mediaUrl: '',
+          points: [
+            { x: cx - hw, y: cy - hh },
+            { x: cx + hw, y: cy - hh },
+            { x: cx + hw, y: cy + hh },
+            { x: cx - hw, y: cy + hh }
+          ]
+        };
+
+        state.surfaces.push(newSurf);
+        state.selectedId = id;
+        buildDOMSurfaces();
+        updateUI();
+        pushHistory();
+        broadcastState();
+      }
+
+      function duplicateActiveSurface() {
+        const s = getActiveSurface();
+        if (!s) return;
+        const id = 'surf_' + Date.now();
+        const copy = JSON.parse(JSON.stringify(s));
+        copy.id = id;
+        copy.name = s.name + ' (Copy)';
+        // Offset slightly
+        copy.points.forEach(p => { p.x += 40; p.y += 40; });
+
+        state.surfaces.push(copy);
+        state.selectedId = id;
+        buildDOMSurfaces();
+        updateUI();
+        pushHistory();
+        broadcastState();
+      }
+
+      function deleteActiveSurface() {
+        if (state.surfaces.length <= 1) {
+          alert('最低1つのサーフェスが必要です。');
+          return;
+        }
+        state.surfaces = state.surfaces.filter(s => s.id !== state.selectedId);
+        state.selectedId = state.surfaces[0].id;
+        buildDOMSurfaces();
+        updateUI();
+        pushHistory();
+        broadcastState();
+      }
+
+      function selectSurface(id) {
+        state.selectedId = id;
+        updateUI();
+        renderOverlaySvg();
+      }
+
+      function getActiveSurface() {
+        return state.surfaces.find(s => s.id === state.selectedId);
+      }
+
+      function toggleSnap() {
+        state.snapEnabled = !state.snapEnabled;
+        const btn = document.getElementById('snapToggleBtn');
+        if (state.snapEnabled) {
+          btn.classList.add('btn-active');
+          btn.textContent = 'スナップ ON';
+        } else {
+          btn.classList.remove('btn-active');
+          btn.textContent = 'スナップ OFF';
+        }
+      }
+
+      function toggleHandles() {
+        state.showHandles = !state.showHandles;
+        document.getElementById('toggleHandlesBtn').classList.toggle('btn-active', state.showHandles);
+        renderOverlaySvg();
+      }
+
+      function toggleFullscreenPresent() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+          document.body.classList.add('fullscreen-present');
+        } else {
+          document.exitFullscreen().catch(() => {});
+          document.body.classList.remove('fullscreen-present');
+        }
+      }
+
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+          document.body.classList.remove('fullscreen-present');
+        }
+        fitStageToWindow();
+      });
+
+      function openProjectorPopup() {
+        const popup = window.open(
+          window.location.pathname + '?mode=projector',
+          'LumenMapperOutput',
+          'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no'
+        );
+        if (popup) {
+          popup.focus();
+        }
+      }
+
+      function onPresetChange(e) {
+        const type = e.target.value;
+        state.surfaces = getPresetSurfaces(type);
+        state.selectedId = state.surfaces[0].id;
+        buildDOMSurfaces();
+        updateUI();
+        pushHistory();
+        broadcastState();
+      }
+
+      function resetActiveCorners() {
+        const s = getActiveSurface();
+        if (!s) return;
+        const cx = STAGE_WIDTH / 2;
+        const cy = STAGE_HEIGHT / 2;
+        const hw = 350;
+        const hh = 250;
+        s.points = [
+          { x: cx - hw, y: cy - hh },
+          { x: cx + hw, y: cy - hh },
+          { x: cx + hw, y: cy + hh },
+          { x: cx - hw, y: cy + hh }
+        ];
+        renderSurfaces();
+        updateInspectorCoords();
+        broadcastState();
+        pushHistory();
+      }
+
+      function centerActiveSurface() {
+        const s = getActiveSurface();
+        if (!s) return;
+        const cx = (s.points[0].x + s.points[1].x + s.points[2].x + s.points[3].x) / 4;
+        const cy = (s.points[0].y + s.points[1].y + s.points[2].y + s.points[3].y) / 4;
+        const dx = (STAGE_WIDTH / 2) - cx;
+        const dy = (STAGE_HEIGHT / 2) - cy;
+        s.points.forEach(p => { p.x += dx; p.y += dy; });
+        renderSurfaces();
+        updateInspectorCoords();
+        broadcastState();
+        pushHistory();
+      }
+
+      function fitActiveSurfaceToStage() {
+        const s = getActiveSurface();
+        if (!s) return;
+        s.points = [
+          { x: 0, y: 0 },
+          { x: STAGE_WIDTH, y: 0 },
+          { x: STAGE_WIDTH, y: STAGE_HEIGHT },
+          { x: 0, y: STAGE_HEIGHT }
+        ];
+        renderSurfaces();
+        updateInspectorCoords();
+        broadcastState();
+        pushHistory();
+      }
+
+      /**
+       * Stage Zoom & Fit to Screen
+       */
+      function setZoom(val) {
+        state.zoom = Math.max(0.2, Math.min(2.0, val));
+        stageContainer.style.transform = `scale(${state.zoom})`;
+        zoomLevelText.textContent = `${Math.round(state.zoom * 100)}%`;
+      }
+
+      function fitStageToWindow() {
+        const viewport = document.getElementById('viewport');
+        const vw = viewport.clientWidth;
+        const vh = viewport.clientHeight;
+
+        if (document.body.classList.contains('mode-projector') || document.body.classList.contains('fullscreen-present')) {
+          const scale = Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
+          stageContainer.style.transform = `scale(${scale})`;
+          return;
+        }
+
+        const margin = 40;
+        const scaleX = (vw - margin * 2) / STAGE_WIDTH;
+        const scaleY = (vh - margin * 2) / STAGE_HEIGHT;
+        const scale = Math.min(scaleX, scaleY, 1.0);
+        setZoom(scale);
+      }
+
+      /**
+       * Update UI Components with Active Surface Values
+       */
+      function updateUI() {
+        const surf = getActiveSurface();
+        document.getElementById('surfaceCountBadge').textContent = state.surfaces.length;
+
+        // Render Layer items
+        let listHtml = '';
+        state.surfaces.forEach((s, idx) => {
+          const isActive = s.id === state.selectedId;
+          listHtml += `
+            <div class="surface-item ${isActive ? 'active' : ''}" data-id="${s.id}">
+              <div class="surface-item-info">
+                <div class="surface-color-dot" style="background: ${s.color};"></div>
+                <div>
+                  <div class="surface-item-title">${s.name}</div>
+                  <div class="surface-item-type">${s.source} (${Math.round(s.opacity * 100)}%)</div>
+                </div>
+              </div>
+              <div class="surface-item-actions">
+                <button class="icon-btn ${s.visible ? 'active' : ''}" data-action="toggle-vis" data-id="${s.id}" title="表示切替">
+                  <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+                </button>
+                <button class="icon-btn ${s.locked ? 'active' : ''}" data-action="toggle-lock" data-id="${s.id}" title="ロック切替">
+                  <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        surfaceListEl.innerHTML = listHtml;
+
+        // Attach item click handlers
+        surfaceListEl.querySelectorAll('.surface-item').forEach(item => {
+          item.addEventListener('click', (e) => {
+            const actBtn = e.target.closest('button[data-action]');
+            if (actBtn) {
+              const act = actBtn.dataset.action;
+              const id = actBtn.dataset.id;
+              const targetSurf = state.surfaces.find(s => s.id === id);
+              if (act === 'toggle-vis') targetSurf.visible = !targetSurf.visible;
+              if (act === 'toggle-lock') targetSurf.locked = !targetSurf.locked;
+              renderSurfaces();
+              updateUI();
+              broadcastState();
+              return;
+            }
+            selectSurface(item.dataset.id);
+          });
+        });
+
+        if (!surf) return;
+
+        // Populate Inspector
+        surfaceNameInput.value = surf.name;
+        surfaceColorInput.value = surf.color;
+        surfaceOpacityInput.value = Math.round(surf.opacity * 100);
+        opacityValText.textContent = Math.round(surf.opacity * 100) + '%';
+        blendModeSelect.value = surf.blendMode;
+        maskShapeSelect.value = surf.mask;
+        brightnessInput.value = surf.brightness;
+        contrastInput.value = surf.contrast;
+        brightnessValText.textContent = surf.brightness + '%';
+        contrastValText.textContent = surf.contrast + '%';
+
+        // Select correct source button
+        document.querySelectorAll('.source-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.source === surf.source);
+        });
+        mediaUploadBox.style.display = surf.source === 'media' ? 'block' : 'none';
+
+        updateInspectorCoords();
+        activeSurfaceStatus.textContent = `選択中: ${surf.name}`;
+      }
+
+      function updateInspectorCoords() {
+        const surf = getActiveSurface();
+        if (!surf) return;
+        for (let i = 0; i < 4; i++) {
+          const xIn = document.getElementById(`coord-p${i}-x`);
+          const yIn = document.getElementById(`coord-p${i}-y`);
+          if (xIn && yIn) {
+            xIn.value = Math.round(surf.points[i].x);
+            yIn.value = Math.round(surf.points[i].y);
+          }
+        }
+      }
+
+      /**
+       * Undo / Redo History
+       */
+      function pushHistory() {
+        state.history = state.history.slice(0, state.historyIndex + 1);
+        state.history.push(JSON.stringify(state.surfaces));
+        if (state.history.length > 30) state.history.shift();
+        state.historyIndex = state.history.length - 1;
+      }
+
+      function undo() {
+        if (state.historyIndex > 0) {
+          state.historyIndex--;
+          state.surfaces = JSON.parse(state.history[state.historyIndex]);
+          buildDOMSurfaces();
+          updateUI();
+          broadcastState();
+        }
+      }
+
+      function redo() {
+        if (state.historyIndex < state.history.length - 1) {
+          state.historyIndex++;
+          state.surfaces = JSON.parse(state.history[state.historyIndex]);
+          buildDOMSurfaces();
+          updateUI();
+          broadcastState();
+        }
+      }
+
+      /**
+       * Storage & JSON Export / Import
+       */
+      function autoSaveLocal() {
+        localStorage.setItem('lumen_mapper_project', JSON.stringify({
+          surfaces: state.surfaces
+        }));
+      }
+
+      function saveToLocal() {
+        autoSaveLocal();
+        alert('プロジェクトをブラウザに保存しました！');
+        document.getElementById('saveModal').classList.remove('open');
+      }
+
+      function exportJson() {
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
+          version: '1.0',
+          appName: 'LUMEN MAPPER',
+          exportTime: new Date().toISOString(),
+          surfaces: state.surfaces
+        }, null, 2));
+        const a = document.createElement('a');
+        a.href = dataStr;
+        a.download = `projection_mapping_${Date.now()}.json`;
+        a.click();
+        document.getElementById('saveModal').classList.remove('open');
+      }
+
+      function importJson(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.surfaces && Array.isArray(data.surfaces)) {
+              state.surfaces = data.surfaces;
+              if (state.surfaces.length > 0) state.selectedId = state.surfaces[0].id;
+              buildDOMSurfaces();
+              updateUI();
+              pushHistory();
+              broadcastState();
+              autoSaveLocal();
+              alert('JSONプロジェクトを読み込みました！');
+              document.getElementById('saveModal').classList.remove('open');
+            } else {
+              alert('無効なプロジェクトファイルです。');
+            }
+          } catch (err) {
+            alert('ファイルの解析に失敗しました。');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // Launch application
+      init();
+    })();
+  </script>
+</body>
+</html>
