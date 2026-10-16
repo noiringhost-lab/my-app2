@@ -1274,22 +1274,22 @@
 
     // ================= Realistic Texture Library =================
     const TEXTURE_LIBRARY = [
-      { key: 'brick_wall',    name: 'レンガの壁',     url: 'assets/textures/brick_wall.jpg' },
-      { key: 'rusty_metal',   name: '錆びた金属',     url: 'assets/textures/rusty_metal.jpg' },
-      { key: 'water_ripple',  name: '水面の波紋',     url: 'assets/textures/water_ripple.jpg' },
-      { key: 'canvas_fabric', name: 'キャンバス布地', url: 'assets/textures/canvas_fabric.jpg' },
-      { key: 'concrete_wall', name: 'コンクリート壁', url: 'assets/textures/concrete_wall.jpg' },
-      { key: 'circuit_board', name: '基板・回路',     url: 'assets/textures/circuit_board.jpg' },
-      { key: 'starry_sky',    name: '星空',           url: 'assets/textures/starry_sky.jpg' },
-      { key: 'wood_plank',    name: '木の板',         url: 'assets/textures/wood_plank.jpg' },
-      { key: 'marble',        name: '大理石',         url: 'assets/textures/marble.jpg' },
-      { key: 'grass',         name: '草・芝生',       url: 'assets/textures/grass.jpg' },
-      { key: 'sand_dune',     name: '砂丘',           url: 'assets/textures/sand_dune.jpg' },
-      { key: 'ice_crack',     name: '氷の亀裂',       url: 'assets/textures/ice_crack.jpg' },
-      { key: 'lava_rock',     name: '溶岩石',         url: 'assets/textures/lava_rock.jpg' },
-      { key: 'cloudy_sky',    name: '雲・空',         url: 'assets/textures/cloudy_sky.jpg' },
-      { key: 'snow',          name: '雪',             url: 'assets/textures/snow.jpg' },
-      { key: 'silk_fabric',   name: 'シルク布地',     url: 'assets/textures/silk_fabric.jpg' }
+      { key: 'brick_wall',    name: 'レンガの壁',     url: 'textures/brick_wall.jpg' },
+      { key: 'rusty_metal',   name: '錆びた金属',     url: 'textures/rusty_metal.jpg' },
+      { key: 'water_ripple',  name: '水面の波紋',     url: 'textures/water_ripple.jpg' },
+      { key: 'canvas_fabric', name: 'キャンバス布地', url: 'textures/canvas_fabric.jpg' },
+      { key: 'concrete_wall', name: 'コンクリート壁', url: 'textures/concrete_wall.jpg' },
+      { key: 'circuit_board', name: '基板・回路',     url: 'textures/circuit_board.jpg' },
+      { key: 'starry_sky',    name: '星空',           url: 'textures/starry_sky.jpg' },
+      { key: 'wood_plank',    name: '木の板',         url: 'textures/wood_plank.jpg' },
+      { key: 'marble',        name: '大理石',         url: 'textures/marble.jpg' },
+      { key: 'grass',         name: '草・芝生',       url: 'textures/grass.jpg' },
+      { key: 'sand_dune',     name: '砂丘',           url: 'textures/sand_dune.jpg' },
+      { key: 'ice_crack',     name: '氷の亀裂',       url: 'textures/ice_crack.jpg' },
+      { key: 'lava_rock',     name: '溶岩石',         url: 'textures/lava_rock.jpg' },
+      { key: 'cloudy_sky',    name: '雲・空',         url: 'textures/cloudy_sky.jpg' },
+      { key: 'snow',          name: '雪',             url: 'textures/snow.jpg' },
+      { key: 'silk_fabric',   name: 'シルク布地',     url: 'textures/silk_fabric.jpg' }
     ];
     const textureImageCache = {}; // key -> preloaded HTMLImageElement
 
@@ -1889,6 +1889,830 @@
             ctx.stroke();
             ctx.restore();
           }
+        }
+      },
+      {
+        key: 'cyber_hex',
+        name: 'サイバーハニカム',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#060812';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const size = Math.min(w, h) * 0.08;
+          const hexH = size * Math.sqrt(3);
+          const hexW = size * 2;
+          const cx = w / 2, cy = h / 2;
+
+          ctx.save();
+          for (let y = -hexH; y < h + hexH * 2; y += hexH) {
+            const row = Math.round(y / hexH);
+            const xOffset = (row % 2 === 0) ? 0 : size * 1.5;
+            for (let x = -hexW; x < w + hexW * 2; x += size * 3) {
+              const px = x + xOffset;
+              const py = y;
+              const dist = Math.hypot(px - cx, py - cy);
+              const pulse = Math.sin(dist * 0.04 - t * 3.5);
+              const active = pulse > 0.4;
+              
+              ctx.beginPath();
+              for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const hx = px + size * Math.cos(angle);
+                const hy = py + size * Math.sin(angle);
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+              }
+              ctx.closePath();
+
+              if (active) {
+                const alpha = 0.2 + (pulse - 0.4) * 0.8 * (0.8 + beat * 0.4);
+                ctx.fillStyle = `rgba(0, 240, 255, ${alpha * 0.35})`;
+                ctx.fill();
+                ctx.strokeStyle = `rgba(0, 255, 220, ${alpha})`;
+                ctx.lineWidth = 2 + beat * 2;
+                ctx.shadowColor = '#00f0ff';
+                ctx.shadowBlur = 8;
+              } else {
+                ctx.strokeStyle = 'rgba(20, 60, 100, 0.35)';
+                ctx.lineWidth = 1;
+                ctx.shadowBlur = 0;
+              }
+              ctx.stroke();
+
+              if (active && pulse > 0.75) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(px, py, 2 + beat * 2, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+          ctx.restore();
+        }
+      },
+      {
+        key: 'aurora_wave',
+        name: 'オーロラウェーブ',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#02050b';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const layers = 5;
+
+          for (let l = 0; l < layers; l++) {
+            const speed = 0.7 + l * 0.25;
+            const baseY = h * (0.35 + l * 0.1);
+            const hue = (140 + l * 40 + Math.sin(t * 0.5 + l) * 30) % 360;
+            
+            ctx.save();
+            const grad = ctx.createLinearGradient(0, baseY - h * 0.35, 0, baseY + h * 0.35);
+            grad.addColorStop(0, `hsla(${hue}, 100%, 65%, 0)`);
+            grad.addColorStop(0.4, `hsla(${hue}, 100%, 60%, ${0.35 + beat * 0.15})`);
+            grad.addColorStop(0.7, `hsla(${(hue + 50) % 360}, 95%, 55%, ${0.25 + beat * 0.1})`);
+            grad.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            
+            const steps = 40;
+            for (let i = 0; i <= steps; i++) {
+              const x = (i / steps) * w;
+              const nx = x / w;
+              const y = baseY + 
+                Math.sin(nx * 4 + t * speed + l) * (h * 0.15) + 
+                Math.cos(nx * 7 - t * (speed * 0.7) + l * 2) * (h * 0.08 * (1 + beat * 0.5));
+              ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = `hsla(${hue}, 100%, 80%, ${0.6 + beat * 0.4})`;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = `hsl(${hue}, 100%, 65%)`;
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            for (let i = 0; i <= steps; i++) {
+              const x = (i / steps) * w;
+              const nx = x / w;
+              const y = baseY + 
+                Math.sin(nx * 4 + t * speed + l) * (h * 0.15) + 
+                Math.cos(nx * 7 - t * (speed * 0.7) + l * 2) * (h * 0.08 * (1 + beat * 0.5));
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      },
+      {
+        key: 'audio_spectrum',
+        name: 'ネオンイコライザー',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#06060c';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h * 0.48;
+          const radius = Math.min(w, h) * 0.22;
+          const bars = 36;
+
+          ctx.save();
+          for (let i = 0; i < bars; i++) {
+            const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
+            const wave = Math.sin(i * 0.6 + t * 4) * 0.5 + 0.5;
+            const noise = _mtxPrng(i * 19.3 + Math.floor(t * 12));
+            const barH = (wave * 0.5 + noise * 0.3 + beat * 0.8) * (Math.min(w, h) * 0.18);
+            const hue = (i * (360 / bars) + t * 30) % 360;
+
+            const x1 = cx + Math.cos(angle) * radius;
+            const y1 = cy + Math.sin(angle) * radius;
+            const x2 = cx + Math.cos(angle) * (radius + barH);
+            const y2 = cy + Math.sin(angle) * (radius + barH);
+
+            ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
+            ctx.lineWidth = Math.max(2, (radius * 2 * Math.PI / bars) * 0.55);
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            const peakDist = radius + barH + 6 + beat * 6;
+            const px = cx + Math.cos(angle) * peakDist;
+            const py = cy + Math.sin(angle) * peakDist;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          const coreR = radius * (0.8 + beat * 0.25);
+          const grad = ctx.createRadialGradient(cx, cy, 5, cx, cy, coreR);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.4, '#00f0ff');
+          grad.addColorStop(0.8, '#ff007f');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          const bottomBars = 32;
+          const bw = w / bottomBars;
+          for (let i = 0; i < bottomBars; i++) {
+            const val = (Math.sin(i * 0.4 - t * 5) * 0.5 + 0.5) * (0.4 + beat * 0.6);
+            const bh = val * (h * 0.22);
+            const hue = (200 + i * 4) % 360;
+            ctx.fillStyle = `hsla(${hue}, 100%, 60%, 0.85)`;
+            ctx.fillRect(i * bw + 1, h - bh, bw - 2, bh);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(i * bw + 1, h - bh - 3, bw - 2, 2);
+          }
+        }
+      },
+      {
+        key: 'laser_scanner',
+        name: 'レーザースキャナー',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = 'rgba(4, 6, 12, 0.4)';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+
+          const scanY = ((t * 0.6) % 1) * h;
+          const beamGrad = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 10);
+          beamGrad.addColorStop(0, 'rgba(255, 0, 60, 0)');
+          beamGrad.addColorStop(0.8, 'rgba(255, 0, 60, 0.25)');
+          beamGrad.addColorStop(1, 'rgba(255, 40, 90, 0.85)');
+          ctx.fillStyle = beamGrad;
+          ctx.fillRect(0, scanY - 30, w, 40);
+
+          ctx.strokeStyle = '#ff0055';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#ff0055';
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.moveTo(0, scanY);
+          ctx.lineTo(w, scanY);
+          ctx.stroke();
+
+          const scanX = (Math.sin(t * 1.8) * 0.5 + 0.5) * w;
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.75)';
+          ctx.lineWidth = 2;
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.moveTo(scanX, 0);
+          ctx.lineTo(scanX, h);
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(20, 20, w - 40, h - 40);
+          const bracket = 25;
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(15, 15 + bracket); ctx.lineTo(15, 15); ctx.lineTo(15 + bracket, 15);
+          ctx.moveTo(w - 15 - bracket, 15); ctx.lineTo(w - 15, 15); ctx.lineTo(w - 15, 15 + bracket);
+          ctx.moveTo(15, h - 15 - bracket); ctx.lineTo(15, h - 15); ctx.lineTo(15 + bracket, h - 15);
+          ctx.moveTo(w - 15 - bracket, h - 15); ctx.lineTo(w - 15, h - 15); ctx.lineTo(w - 15, h - 15 - bracket);
+          ctx.stroke();
+
+          const rot = t * 1.5;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rot);
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, Math.min(w, h) * 0.22, 0, Math.PI * 0.4);
+          ctx.arc(0, 0, Math.min(w, h) * 0.22, Math.PI, Math.PI * 1.4);
+          ctx.stroke();
+          ctx.rotate(-rot * 2);
+          ctx.strokeStyle = '#ff0055';
+          ctx.beginPath();
+          ctx.arc(0, 0, Math.min(w, h) * 0.14, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.fillStyle = '#00f0ff';
+          ctx.font = '10px monospace';
+          ctx.fillText(`TARGET LOCKED // COORD [${Math.floor(scanX)}, ${Math.floor(scanY)}]`, w / 2, h - 30);
+        }
+      },
+      {
+        key: 'warp_tunnel',
+        name: 'ワープトンネル',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#04020a';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const rings = 14;
+          const speed = 1.2 + beat * 1.5;
+
+          for (let i = 0; i < rings; i++) {
+            const progress = ((t * speed + i / rings) % 1);
+            const depth = Math.pow(progress, 3);
+            const r = depth * Math.min(w, h) * 0.75;
+            if (r < 2) continue;
+
+            const hue = (t * 60 + i * 25) % 360;
+            ctx.strokeStyle = `hsla(${hue}, 100%, 65%, ${depth})`;
+            ctx.lineWidth = 1 + depth * 5;
+            ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+            ctx.shadowBlur = 10 * depth;
+
+            ctx.beginPath();
+            const sides = 8;
+            for (let s = 0; s <= sides; s++) {
+              const a = (s / sides) * Math.PI * 2 + t * 0.4 * (i % 2 === 0 ? 1 : -1);
+              const px = cx + Math.cos(a) * r;
+              const py = cy + Math.sin(a) * r;
+              if (s === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+          ctx.lineWidth = 1;
+          const sides = 8;
+          for (let s = 0; s < sides; s++) {
+            const a = (s / sides) * Math.PI * 2 + t * 0.4;
+            const maxR = Math.min(w, h) * 0.75;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 25;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 6 + beat * 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      },
+      {
+        key: 'liquid_flow',
+        name: '流体マーブル',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#050711';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const bands = 12;
+
+          for (let b = 0; b < bands; b++) {
+            const progress = b / bands;
+            const yBase = h * progress;
+            const hue = (210 + b * 22 + t * 25) % 360;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+
+            const steps = 30;
+            for (let i = 0; i <= steps; i++) {
+              const x = (i / steps) * w;
+              const nx = x / w;
+              const wave1 = Math.sin(nx * 3 + t * 1.2 + b * 0.5) * (h * 0.08);
+              const wave2 = Math.cos(nx * 6 - t * 0.8 + b * 0.3) * (h * 0.05 * (1 + beat));
+              const wave3 = Math.sin((nx + b) * 2 + t * 2) * (h * 0.03);
+              const y = yBase + wave1 + wave2 + wave3;
+              ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+
+            const grad = ctx.createLinearGradient(0, yBase - 40, w, yBase + 40);
+            grad.addColorStop(0, `hsla(${hue}, 90%, 55%, 0.7)`);
+            grad.addColorStop(0.5, `hsla(${(hue + 45) % 360}, 95%, 65%, 0.8)`);
+            grad.addColorStop(1, `hsla(${(hue + 90) % 360}, 100%, 75%, 0.7)`);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.strokeStyle = `hsla(${(hue + 60) % 360}, 100%, 90%, 0.8)`;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = `hsl(${hue}, 100%, 65%)`;
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      },
+      {
+        key: 'neon_vortex',
+        name: 'ネオンボルテックス',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = 'rgba(5, 5, 12, 0.35)';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const maxR = Math.min(w, h) * 0.55;
+          const arms = 4;
+          const particlesPerArm = 28;
+
+          ctx.save();
+          for (let a = 0; a < arms; a++) {
+            const armAngle = (a / arms) * Math.PI * 2;
+            for (let p = 0; p < particlesPerArm; p++) {
+              const prog = (p / particlesPerArm + t * 0.25) % 1;
+              const r = prog * maxR;
+              const theta = armAngle + Math.pow(prog, 0.6) * Math.PI * 3.5 + t * 0.8;
+              const px = cx + Math.cos(theta) * r;
+              const py = cy + Math.sin(theta) * r;
+
+              const hue = (a * 90 + prog * 180 + t * 40) % 360;
+              const size = (1 - prog) * (4 + beat * 6) + 1.5;
+              const alpha = Math.sin(prog * Math.PI);
+
+              ctx.fillStyle = `hsla(${hue}, 100%, 65%, ${alpha})`;
+              ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+              ctx.shadowBlur = 10;
+              ctx.beginPath();
+              ctx.arc(px, py, size, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          const coreGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 30 + beat * 25);
+          coreGrad.addColorStop(0, '#ffffff');
+          coreGrad.addColorStop(0.3, '#00ffff');
+          coreGrad.addColorStop(0.7, '#ff00aa');
+          coreGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = coreGrad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 35 + beat * 25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      },
+      {
+        key: 'circuit_stream',
+        name: 'サイバー回路',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#060a12';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+
+          ctx.strokeStyle = 'rgba(10, 45, 75, 0.6)';
+          ctx.lineWidth = 1;
+          const gridSize = Math.min(w, h) * 0.12;
+          for (let x = 0; x <= w; x += gridSize) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+          }
+          for (let y = 0; y <= h; y += gridSize) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+          }
+
+          if (!this._traces) {
+            this._traces = [];
+            for (let i = 0; i < 16; i++) {
+              const pts = [];
+              let x = Math.floor(_mtxPrng(i * 13.7) * 8) * gridSize + gridSize;
+              let y = Math.floor(_mtxPrng(i * 29.1) * 8) * gridSize + gridSize;
+              pts.push([x, y]);
+              for (let step = 0; step < 5; step++) {
+                const dir = Math.floor(_mtxPrng(i * 7.1 + step * 3.3) * 4);
+                const len = (Math.floor(_mtxPrng(i * 4.9 + step * 8.2) * 2) + 1) * gridSize;
+                if (dir === 0) x = Math.min(w, x + len);
+                else if (dir === 1) y = Math.min(h, y + len);
+                else if (dir === 2) x = Math.max(0, x - len);
+                else y = Math.max(0, y - len);
+                pts.push([x, y]);
+              }
+              this._traces.push({ pts, speed: 0.4 + _mtxPrng(i * 43.1) * 0.6, hue: (160 + i * 15) % 360 });
+            }
+          }
+
+          ctx.save();
+          this._traces.forEach((tr, idx) => {
+            ctx.strokeStyle = `hsla(${tr.hue}, 80%, 45%, 0.5)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            tr.pts.forEach((p, i) => {
+              if (i === 0) ctx.moveTo(p[0], p[1]);
+              else ctx.lineTo(p[0], p[1]);
+            });
+            ctx.stroke();
+
+            tr.pts.forEach(p => {
+              ctx.fillStyle = `hsl(${tr.hue}, 100%, 55%)`;
+              ctx.beginPath();
+              ctx.arc(p[0], p[1], 3, 0, Math.PI * 2);
+              ctx.fill();
+            });
+
+            const numSegs = tr.pts.length - 1;
+            const totalProgress = ((t * tr.speed * (1 + beat * 0.8) + idx * 0.3) % 1) * numSegs;
+            const segIdx = Math.floor(totalProgress);
+            const segProg = totalProgress - segIdx;
+            const p0 = tr.pts[segIdx];
+            const p1 = tr.pts[segIdx + 1];
+            if (p0 && p1) {
+              const curX = p0[0] + (p1[0] - p0[0]) * segProg;
+              const curY = p0[1] + (p1[1] - p0[1]) * segProg;
+
+              ctx.fillStyle = '#ffffff';
+              ctx.shadowColor = `hsl(${tr.hue}, 100%, 65%)`;
+              ctx.shadowBlur = 12;
+              ctx.beginPath();
+              ctx.arc(curX, curY, 4 + beat * 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+          ctx.restore();
+        }
+      },
+      {
+        key: 'plasma_arcs',
+        name: 'プラズマ放電',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = 'rgba(3, 4, 10, 0.35)';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const numArcs = 7;
+
+          ctx.save();
+          for (let a = 0; a < numArcs; a++) {
+            const baseAngle = (a / numArcs) * Math.PI * 2 + t * 0.6;
+            const targetR = Math.min(w, h) * (0.42 + 0.08 * Math.sin(t * 3 + a));
+            const tx = cx + Math.cos(baseAngle) * targetR;
+            const ty = cy + Math.sin(baseAngle) * targetR;
+
+            const segments = 12;
+            let curX = cx, curY = cy;
+            const pts = [[curX, curY]];
+
+            for (let s = 1; s <= segments; s++) {
+              const p = s / segments;
+              let nx = cx + (tx - cx) * p;
+              let ny = cy + (ty - cy) * p;
+              if (s < segments) {
+                const jitter = (Math.random() - 0.5) * (Math.min(w, h) * (0.07 + beat * 0.08));
+                const perpX = -(ty - cy);
+                const perpY = (tx - cx);
+                const len = Math.hypot(perpX, perpY) || 1;
+                nx += (perpX / len) * jitter;
+                ny += (perpY / len) * jitter;
+              }
+              pts.push([nx, ny]);
+            }
+
+            const hue = (220 + a * 30 + Math.sin(t * 5) * 40) % 360;
+            ctx.strokeStyle = `hsl(${hue}, 100%, 75%)`;
+            ctx.lineWidth = 2 + beat * 2;
+            ctx.shadowColor = `hsl(${hue}, 100%, 65%)`;
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            pts.forEach((pt, i) => {
+              if (i === 0) ctx.moveTo(pt[0], pt[1]);
+              else ctx.lineTo(pt[0], pt[1]);
+            });
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 25;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 14 + beat * 18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      },
+      {
+        key: 'sonar_radar',
+        name: 'ソナーレーダー',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#020d08';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const maxR = Math.min(w, h) * 0.44;
+
+          ctx.strokeStyle = '#00ff88';
+          ctx.lineWidth = 1.5;
+          ctx.shadowColor = '#00ff88';
+          ctx.shadowBlur = 6;
+          ctx.beginPath(); ctx.arc(cx, cy, maxR, 0, Math.PI * 2); ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          ctx.strokeStyle = 'rgba(0, 255, 136, 0.25)';
+          ctx.lineWidth = 1;
+          for (let r = 1; r <= 3; r++) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, (maxR / 4) * r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(cx - maxR, cy); ctx.lineTo(cx + maxR, cy);
+          ctx.moveTo(cx, cy - maxR); ctx.lineTo(cx, cy + maxR);
+          ctx.stroke();
+
+          const sweepAngle = (t * 1.5) % (Math.PI * 2);
+          const sweepSteps = 24;
+          for (let i = 0; i < sweepSteps; i++) {
+            const a = sweepAngle - (i / sweepSteps) * (Math.PI * 0.45);
+            const alpha = (1 - i / sweepSteps) * 0.35;
+            ctx.fillStyle = `rgba(0, 255, 136, ${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, maxR, a - 0.05, a);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          ctx.strokeStyle = '#00ffaa';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = '#00ffaa';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(sweepAngle) * maxR, cy + Math.sin(sweepAngle) * maxR);
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          const blips = [
+            { r: maxR * 0.65, theta: 1.1 },
+            { r: maxR * 0.35, theta: 2.8 },
+            { r: maxR * 0.8, theta: 4.5 }
+          ];
+          blips.forEach(b => {
+            let diff = (sweepAngle - b.theta) % (Math.PI * 2);
+            if (diff < 0) diff += Math.PI * 2;
+            if (diff < 2.0) {
+              const alpha = 1 - diff / 2.0;
+              const bx = cx + Math.cos(b.theta) * b.r;
+              const by = cy + Math.sin(b.theta) * b.r;
+              ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+              ctx.shadowColor = '#00ff88';
+              ctx.shadowBlur = 10;
+              ctx.beginPath();
+              ctx.arc(bx, by, 3 + beat * 3, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = `rgba(0, 255, 136, ${alpha})`;
+              ctx.beginPath();
+              ctx.arc(bx, by, (1 - alpha) * 15 + 4, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          });
+        }
+      },
+      {
+        key: 'prism_facets',
+        name: 'クリスタルプリズム',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#06040d';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const size = Math.min(w, h) * 0.35;
+          const rotY = t * 0.8;
+          const rotX = t * 0.5;
+
+          const verts = [
+            [0, 1.3, 0],
+            [Math.cos(0), 0, Math.sin(0)],
+            [Math.cos(Math.PI * 0.4), 0, Math.sin(Math.PI * 0.4)],
+            [Math.cos(Math.PI * 0.8), 0, Math.sin(Math.PI * 0.8)],
+            [Math.cos(Math.PI * 1.2), 0, Math.sin(Math.PI * 1.2)],
+            [Math.cos(Math.PI * 1.6), 0, Math.sin(Math.PI * 1.6)],
+            [0, -1.3, 0]
+          ];
+
+          function project(p) {
+            let [x, y, z] = p;
+            const cx_ = Math.cos(rotX), sx_ = Math.sin(rotX);
+            const y1 = y * cx_ - z * sx_, z1 = y * sx_ + z * cx_;
+            const cy_ = Math.cos(rotY), sy_ = Math.sin(rotY);
+            const x2 = x * cy_ + z1 * sy_, z2 = -x * sy_ + z1 * cy_;
+            const scale = 1 / (2.5 - z2 * 0.4);
+            return [cx + x2 * size * scale, cy - y1 * size * scale, z2];
+          }
+
+          const proj = verts.map(project);
+          const faces = [
+            [0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5], [0, 5, 1],
+            [6, 2, 1], [6, 3, 2], [6, 4, 3], [6, 5, 4], [6, 1, 5]
+          ];
+
+          faces.forEach((f, idx) => {
+            const p0 = proj[f[0]], p1 = proj[f[1]], p2 = proj[f[2]];
+            const normalZ = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
+            if (normalZ > 0) {
+              const hue = (t * 50 + idx * 36) % 360;
+              ctx.fillStyle = `hsla(${hue}, 85%, 65%, ${0.35 + beat * 0.2})`;
+              ctx.beginPath();
+              ctx.moveTo(p0[0], p0[1]);
+              ctx.lineTo(p1[0], p1[1]);
+              ctx.lineTo(p2[0], p2[1]);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.strokeStyle = `hsla(${hue}, 100%, 85%, 0.8)`;
+              ctx.lineWidth = 1.5;
+              ctx.shadowColor = `hsl(${hue}, 100%, 65%)`;
+              ctx.shadowBlur = 10;
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+            }
+          });
+        }
+      },
+      {
+        key: 'digital_glitch',
+        name: 'サイバーグリッチ',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#050508';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+
+          ctx.save();
+          const numSlices = 14;
+          for (let i = 0; i < numSlices; i++) {
+            const sy = (i / numSlices) * h;
+            const sh = h / numSlices;
+            const seed = i * 23.7 + Math.floor(t * 8);
+            const hasGlitch = _mtxPrng(seed) > 0.65;
+            const shift = hasGlitch ? (_mtxPrng(seed + 1) - 0.5) * (w * 0.2 * (1 + beat * 2)) : 0;
+
+            ctx.fillStyle = (i % 2 === 0) ? '#0a0d18' : '#070a12';
+            ctx.fillRect(0, sy, w, sh);
+
+            if (hasGlitch) {
+              ctx.fillStyle = 'rgba(255, 0, 80, 0.4)';
+              ctx.fillRect(shift + 10, sy, w * 0.4, sh);
+              ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+              ctx.fillRect(shift - 10, sy, w * 0.4, sh);
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(shift + w * 0.2, sy + sh * 0.2, w * 0.1, sh * 0.6);
+            }
+
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(shift, sy + sh / 2);
+            ctx.lineTo(shift + w, sy + sh / 2);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = '#00f0ff';
+          ctx.font = 'bold 24px monospace';
+          ctx.shadowColor = '#ff0055';
+          ctx.shadowBlur = 12;
+          const textX = w * 0.15 + (Math.random() - 0.5) * 8 * (beat + 0.2);
+          ctx.fillText('SYSTEM OVERRIDE', textX, h * 0.48);
+          ctx.fillStyle = '#ff0055';
+          ctx.fillText('0xDEADBEEF // ERROR', textX + 2, h * 0.58);
+          ctx.shadowBlur = 0;
+          ctx.restore();
+        }
+      },
+      {
+        key: 'dna_helix',
+        name: 'DNAヘリックス',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#04050e';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2;
+          const nodes = 22;
+          const amp = Math.min(w, h) * 0.28;
+
+          ctx.save();
+          for (let i = 0; i < nodes; i++) {
+            const ny = (i / (nodes - 1)) * (h * 0.85) + h * 0.075;
+            const phase = i * 0.35 + t * 2.2;
+            const x1 = cx + Math.sin(phase) * amp;
+            const z1 = Math.cos(phase);
+            const x2 = cx - Math.sin(phase) * amp;
+            const z2 = -z1;
+
+            const rungAlpha = (z1 + 1) * 0.35 + 0.3;
+            ctx.strokeStyle = `rgba(180, 220, 255, ${rungAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x1, ny);
+            ctx.lineTo(x2, ny);
+            ctx.stroke();
+
+            const r1 = (3 + z1 * 1.5) * (1 + beat * 0.4);
+            ctx.fillStyle = z1 > 0 ? '#00f0ff' : '#0077aa';
+            ctx.shadowColor = '#00f0ff';
+            ctx.shadowBlur = z1 > 0 ? 12 : 3;
+            ctx.beginPath();
+            ctx.arc(x1, ny, r1, 0, Math.PI * 2);
+            ctx.fill();
+
+            const r2 = (3 + z2 * 1.5) * (1 + beat * 0.4);
+            ctx.fillStyle = z2 > 0 ? '#ff007f' : '#aa0055';
+            ctx.shadowColor = '#ff007f';
+            ctx.shadowBlur = z2 > 0 ? 12 : 3;
+            ctx.beginPath();
+            ctx.arc(x2, ny, r2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      },
+      {
+        key: 'golden_mandala',
+        name: '光の曼荼羅',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#0a0604';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const maxR = Math.min(w, h) * 0.42;
+          const tiers = 5;
+
+          ctx.save();
+          ctx.translate(cx, cy);
+
+          for (let tier = 1; tier <= tiers; tier++) {
+            const petals = 6 * tier;
+            const r = (tier / tiers) * maxR * (1 + beat * 0.08);
+            const rot = t * (0.2 / tier) * (tier % 2 === 0 ? 1 : -1);
+
+            ctx.rotate(rot);
+            ctx.strokeStyle = `hsla(${40 + tier * 8}, 100%, ${60 + tier * 5}%, 0.85)`;
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 8;
+
+            for (let i = 0; i < petals; i++) {
+              const a = (i / petals) * Math.PI * 2;
+              const px = Math.cos(a) * r;
+              const py = Math.sin(a) * r;
+              const petalR = (maxR / tiers) * 0.65;
+              ctx.beginPath();
+              ctx.arc(px, py, petalR, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+
+          ctx.fillStyle = '#fff4cc';
+          ctx.shadowColor = '#ffbb00';
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(0, 0, 8 + beat * 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         }
       }
     ];
@@ -4895,15 +5719,39 @@
       }
       showStatus('⏳ テクスチャを読込中...');
       try {
-        const resp = await fetch(tex.url);
-        if (!resp.ok) throw new Error('fetch failed: ' + resp.status);
-        const blob = await resp.blob();
+        let loaded = false;
+        try {
+          const resp = await fetch(tex.url);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const key = 'texture_' + tex.key + '_' + layer.id + '_' + Date.now().toString(36);
+            await idbPut(key, blob).catch(() => {});
+            layer.mediaKey = key;
+            loaded = await loadMediaElementForLayer(layer, blob);
+          }
+        } catch (fetchErr) {
+          console.warn('Fetch failed, falling back to direct image load', fetchErr);
+        }
 
-        const key = 'texture_' + tex.key + '_' + layer.id + '_' + Date.now().toString(36);
-        await idbPut(key, blob);
-        layer.mediaKey = key;
+        // Direct image fallback if fetch fails (e.g. file:// or restricted contexts)
+        if (!loaded) {
+          loaded = await new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              layer.mediaEl = img;
+              layer.mediaType = 'image';
+              layer.mediaReady = true;
+              layer.textureNeedsUpload = true;
+              layer.mediaKey = null;
+              renderFrame();
+              resolve(true);
+            };
+            img.onerror = () => resolve(false);
+            img.src = tex.url;
+          });
+        }
 
-        const loaded = await loadMediaElementForLayer(layer, blob);
         if (loaded) {
           // 投影面の形状(vertices)は変更しない。テクスチャは既存の投影面にそのまま貼り込まれる。
           document.querySelectorAll('#textureLibraryGrid .texture-thumb').forEach(el => {
@@ -6075,28 +6923,125 @@
       projectorCtx.drawImage(glcanvas, 0, 0);
 
       // ペンレイヤー等のストロークも投影窓へ同期
-      for (const layer of layers) {
-        if (layer.kind === 'pen' && layer.points && layer.points.length > 1 && layer.visible !== false) {
-          const sx = projectorCanvas.width / getRect().width;
-          const sy = projectorCanvas.height / getRect().height;
-          projectorCtx.save();
-          projectorCtx.strokeStyle = layer.strokeColor || '#ffffff';
-          projectorCtx.lineWidth = (layer.strokeWidth || 3) * sx;
-          projectorCtx.lineCap = 'round';
-          projectorCtx.lineJoin = 'round';
-          if (layer.anim === 'glow') {
-            projectorCtx.shadowColor = layer.strokeColor || '#ffffff';
-            projectorCtx.shadowBlur = 12 * sx;
+      const rect = getRect();
+      if (rect && rect.width > 0 && rect.height > 0) {
+        const sx = projectorCanvas.width / rect.width;
+        const sy = projectorCanvas.height / rect.height;
+        const now = performance.now() / 1000;
+
+        for (const layer of layers) {
+          if ((layer.type === 'pen' || layer.kind === 'pen') && layer.points && layer.points.length > 0 && layer.visible !== false) {
+            projectorCtx.save();
+            const spd = layer.animSpeed || 1;
+            const anim = layer.anim || 'none';
+            let strokeWidth = (layer.strokeWidth || 3) * sx;
+            let strokeColor = layer.strokeColor || '#ffffff';
+            let alpha = layer.opacity !== undefined ? layer.opacity : 1;
+
+            switch (anim) {
+              case 'glow': {
+                const pulse = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / spd));
+                projectorCtx.shadowColor = strokeColor;
+                projectorCtx.shadowBlur = (10 + pulse * 15) * sx;
+                break;
+              }
+              case 'blink': {
+                const b = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / spd));
+                alpha *= (0.15 + 0.85 * b);
+                break;
+              }
+              case 'glowblink': {
+                const pulse = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / spd));
+                projectorCtx.shadowColor = strokeColor;
+                projectorCtx.shadowBlur = (10 + pulse * 15) * sx;
+                const b = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / (spd * 2)));
+                alpha *= (0.15 + 0.85 * b);
+                break;
+              }
+              case 'flow': {
+                projectorCtx.setLineDash([20 * sx, 20 * sx]);
+                projectorCtx.lineDashOffset = -(now / spd) * 40 * sx;
+                break;
+              }
+              case 'flowrev': {
+                projectorCtx.setLineDash([20 * sx, 20 * sx]);
+                projectorCtx.lineDashOffset = (now / spd) * 40 * sx;
+                break;
+              }
+              case 'pulse': {
+                const p = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / spd));
+                strokeWidth *= (1.0 + p * 1.5);
+                alpha *= (0.6 + 0.4 * (1 - p));
+                break;
+              }
+              case 'breath': {
+                const br = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / spd));
+                alpha *= (0.2 + 0.8 * br);
+                break;
+              }
+              case 'rainbow': {
+                const hue = ((now / spd) * 360) % 360;
+                strokeColor = `hsl(${hue}, 100%, 60%)`;
+                break;
+              }
+              case 'zap': {
+                projectorCtx.setLineDash([8 * sx, 4 * sx]);
+                const step = Math.floor(now / (spd * 0.1)) % 4;
+                projectorCtx.lineDashOffset = -step * 8 * sx;
+                if (Math.random() < 0.25) alpha *= 0.2;
+                break;
+              }
+              case 'spark': {
+                alpha *= (0.3 + 0.7 * (Math.random() > 0.3 ? 1 : 0.2));
+                break;
+              }
+              case 'chase': {
+                projectorCtx.setLineDash([40 * sx, 60 * sx]);
+                projectorCtx.lineDashOffset = -(now / spd) * 120 * sx;
+                break;
+              }
+              case 'laser': {
+                projectorCtx.setLineDash([6 * sx, 14 * sx]);
+                projectorCtx.lineDashOffset = -(now / (spd * 0.3)) * 20 * sx;
+                projectorCtx.shadowColor = strokeColor;
+                projectorCtx.shadowBlur = 12 * sx;
+                break;
+              }
+              case 'wave': {
+                projectorCtx.setLineDash([15 * sx, 10 * sx]);
+                projectorCtx.lineDashOffset = -(now / spd) * 25 * sx;
+                break;
+              }
+              case 'fade': {
+                const f = 0.5 + 0.5 * Math.sin(now * (Math.PI * 2 / spd));
+                alpha *= (0.1 + 0.9 * f);
+                break;
+              }
+            }
+
+            projectorCtx.globalAlpha = Math.max(0, Math.min(1, alpha));
+            projectorCtx.strokeStyle = strokeColor;
+            projectorCtx.fillStyle = strokeColor;
+            projectorCtx.lineWidth = strokeWidth;
+            projectorCtx.lineCap = 'round';
+            projectorCtx.lineJoin = 'round';
+
+            if (layer.points.length === 1) {
+              projectorCtx.beginPath();
+              projectorCtx.arc(layer.points[0][0] * sx, layer.points[0][1] * sy, strokeWidth / 2, 0, Math.PI * 2);
+              projectorCtx.fill();
+            } else if (layer.points.length > 1) {
+              projectorCtx.beginPath();
+              layer.points.forEach((pt, i) => {
+                const px = pt[0] * sx;
+                const py = pt[1] * sy;
+                if (i === 0) projectorCtx.moveTo(px, py);
+                else projectorCtx.lineTo(px, py);
+              });
+              projectorCtx.stroke();
+            }
+            projectorCtx.restore();
           }
-          projectorCtx.beginPath();
-          layer.points.forEach((pt, i) => {
-            const px = pt[0] * sx;
-            const py = pt[1] * sy;
-            if (i === 0) projectorCtx.moveTo(px, py);
-            else projectorCtx.lineTo(px, py);
-          });
-          projectorCtx.stroke();
-          projectorCtx.restore();
         }
       }
     }
