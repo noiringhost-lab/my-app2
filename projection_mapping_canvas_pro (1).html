@@ -362,7 +362,56 @@
       display: block;
     }
 
-    /* ===== Timeline Editor (\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u30fb\u30b9\u30b1\u30b8\u30e5\u30fc\u30ea\u30b3\u30f3\u30fb\u30ad\u30e5\u30fc\u306e\u8996\u899a\u5316\u7de8\u96c6) ===== */
+    /* ===== AI Motion Texture Studio ===== */
+    .ai-surface-card {
+      position: relative;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.75rem;
+      padding: 0.6rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+    .ai-surface-card:hover {
+      border-color: rgba(20, 184, 166, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      transform: translateY(-1px);
+    }
+    .ai-surface-card.selected {
+      border-color: #14b8a6;
+      background: rgba(20, 184, 166, 0.12);
+      box-shadow: 0 0 0 1px #14b8a6, 0 4px 12px rgba(20, 184, 166, 0.15);
+    }
+    .ai-prompt-chip {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .ai-prompt-chip:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .ai-prompt-chip:active {
+      transform: scale(0.98);
+    }
+    .ai-motion-thumb-badge {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      z-index: 2;
+      font-size: 7.5px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 3px;
+      background: rgba(20, 184, 166, 0.85);
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ===== Timeline Editor (パフォーマンス・スケジューラー・キューの視覚化編集) ===== */
     #timelineTrack {
       touch-action: none;
     }
@@ -641,6 +690,13 @@
       </button>
     </div>
 
+    <!-- AI Motion Studio Trigger Button -->
+    <button id="openAiMotionBtn" class="w-full py-2 px-3 text-xs font-bold rounded-xl bg-gradient-to-r from-teal-500 via-indigo-600 to-purple-600 hover:from-teal-400 hover:via-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/35 transition duration-200 flex items-center justify-center gap-2 group border border-teal-400/30">
+      <span class="text-sm animate-pulse">✨</span>
+      <span>AIモーション生成スタジオ</span>
+      <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 font-mono tracking-wider">AI</span>
+    </button>
+
     <!-- Tabs Container -->
     <div class="flex gap-1 bg-slate-900/60 p-1 rounded-lg border border-white/5">
       <button class="tab-btn flex-1 py-1.5 text-xs rounded-md text-slate-400 hover:text-white hover:bg-white/5 font-medium transition active" data-tab="layers">レイヤー</button>
@@ -700,6 +756,9 @@
           <button id="layerDownBtn" class="py-1 px-2 text-xs bg-white/5 hover:bg-white/10 rounded border border-white/5 transition flex items-center justify-center gap-1">↓ 下へ</button>
           <button id="duplicateBtn" class="py-1 px-2 text-xs bg-white/5 hover:bg-white/10 rounded border border-white/5 transition flex items-center justify-center gap-1">複製</button>
         </div>
+        <button id="layerAiMotionBtn" class="w-full mt-2 py-1.5 px-2 text-xs bg-gradient-to-r from-teal-500/15 to-purple-500/15 hover:from-teal-500/25 hover:to-purple-500/25 text-teal-300 rounded-lg border border-teal-500/30 transition flex items-center justify-center gap-1.5 font-medium">
+          <span>✨</span><span>指定面にAIモーションを生成</span>
+        </button>
       </div>
 
       <!-- EDIT ACTIVE LAYER SECTION -->
@@ -860,8 +919,20 @@
       <div class="border-t border-white/5 pt-3">
         <div class="flex justify-between items-center mb-2">
           <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">🎞️ モーションテクスチャライブラリ</span>
-          <span class="text-[9px] text-slate-500">クリックで適用</span>
+          <button id="mediaAiMotionBtn" class="px-2 py-0.5 text-[10px] bg-gradient-to-r from-teal-500/30 to-purple-500/30 hover:from-teal-500/50 hover:to-purple-500/50 text-teal-300 rounded border border-teal-400/30 transition flex items-center gap-1 font-semibold">
+            <span>✨</span><span>AI自動生成</span>
+          </button>
         </div>
+
+        <!-- AI Generated Textures Grid (Visible when AI textures exist) -->
+        <div id="aiMotionHistorySection" class="mb-2.5 hidden">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-[9px] text-teal-300 font-bold uppercase tracking-wider">✨ AI生成モーション</span>
+            <span class="text-[8px] text-slate-500" id="aiGeneratedCount">0件</span>
+          </div>
+          <div id="aiMotionLibraryGrid" class="grid grid-cols-3 gap-1.5"></div>
+        </div>
+
         <div id="motionTextureLibraryGrid" class="grid grid-cols-3 gap-1.5"></div>
         <p class="text-[9px] text-slate-500 mt-1.5">※ 動画ファイルではなく、その場でリアルタイム生成される動く演出パターンです（軽量・無限ループ再生）。投影面の形状は保持されます。</p>
 
@@ -1261,6 +1332,205 @@
   <!-- Notification Toast -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-950/95 border border-accent/40 text-slate-100 py-2.5 px-5 rounded-xl text-xs z-[100] pointer-events-none opacity-0 translate-y-2 transition duration-300 shadow-xl flex items-center gap-1.5"></div>
 
+  <!-- ================= AI MOTION TEXTURE STUDIO MODAL ================= -->
+  <div id="aiMotionModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900/95 border border-teal-500/30 rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl shadow-teal-500/10 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-teal-950/40 via-slate-900 to-indigo-950/40">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-teal-500/30">
+            <span class="text-base animate-pulse">✨</span>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              AIモーションテクスチャー生成スタジオ
+              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 font-mono uppercase tracking-wider">Pro Edition</span>
+            </h2>
+            <p class="text-[11px] text-slate-400">投影面を指定し「こんな映像が流れるようにしたい」と入力すると、立体連動モーションが自動生成されます</p>
+          </div>
+        </div>
+        <button id="closeAiModalBtn" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition text-base">✕</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-4 sm:p-5 flex-1 overflow-y-auto flex flex-col gap-5">
+        
+        <!-- STEP 1: 投影面の指定（複数選択可能） -->
+        <div class="flex flex-col gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 text-xs flex items-center justify-center font-bold font-mono">1</span>
+              <span class="text-xs font-bold text-slate-200">投影面の指定（複数選択可能）</span>
+              <span id="aiSelectedSurfacesCount" class="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-semibold border border-teal-500/30">0面選択中</span>
+            </div>
+            <!-- Quick Selection Toolbar -->
+            <div class="flex items-center gap-1">
+              <button id="aiSelectAllBtn" class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">全選択</button>
+              <button id="aiSelectCubeBtn" class="text-[10px] px-2 py-1 rounded bg-teal-950/40 hover:bg-teal-900/60 text-teal-300 border border-teal-500/30 transition font-medium" title="3面キューブ(天面・左面・右面)を優先選択">📐 3Dキューブ(3面)</button>
+              <button id="aiSelectActiveBtn" class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">選択中のみ</button>
+              <button id="aiClearSelectBtn" class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 border border-white/10 transition">解除</button>
+            </div>
+          </div>
+
+          <!-- Empty Surface Prompt (if no layers) -->
+          <div id="aiNoSurfacesHint" class="hidden p-4 rounded-xl border border-dashed border-teal-500/30 bg-teal-950/10 text-center flex flex-col items-center gap-2">
+            <span class="text-2xl">📐</span>
+            <p class="text-xs text-slate-300">投影面がまだ配置されていません</p>
+            <button id="aiAddCubePresetBtn" class="px-3 py-1.5 text-xs bg-teal-600 hover:bg-teal-500 text-white font-medium rounded-lg shadow transition flex items-center gap-1.5">
+              <span>📐</span><span>3Dキューブ(天面・左面・右面)を配置して選択</span>
+            </button>
+          </div>
+
+          <!-- Surfaces Grid / List -->
+          <div id="aiSurfacesList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+            <!-- Dynamically populated surface cards -->
+          </div>
+          <p class="text-[10px] text-slate-500">※ 複数面（例：キューブ天面・左面・右面）を指定すると、全体で一つの立体（四角箱の中の水槽など）として同期・連動したモーションが生成されます。</p>
+        </div>
+
+        <!-- STEP 2: プロンプト入力 -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 text-xs flex items-center justify-center font-bold font-mono">2</span>
+              <span class="text-xs font-bold text-slate-200">「こんな映像が流れるようにしたい」イメージを入力</span>
+            </div>
+            <span class="text-[10px] text-slate-400">日本語または英語で入力</span>
+          </div>
+
+          <div class="relative">
+            <textarea id="aiPromptInput" rows="3" class="w-full bg-slate-950/80 border border-white/15 focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 resize-none outline-none font-sans transition pr-16" placeholder="例：四角箱の中に水が入っていて、動くモーションテクスチャーを作って"></textarea>
+            <button id="aiClearPromptBtn" class="absolute top-2.5 right-2.5 text-slate-500 hover:text-slate-300 text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition" title="入力をクリア">クリア</button>
+          </div>
+
+          <!-- Recommended Prompts Chips -->
+          <div class="flex flex-col gap-1.5">
+            <span class="text-[10px] text-slate-400 font-medium">💡 ワンクリックで入力できるおすすめプロンプト例:</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-teal-950/40 hover:bg-teal-900/60 border border-teal-500/40 text-teal-200 text-[11px] transition flex items-center gap-1 font-medium" data-prompt="四角箱の中に水が入っていて、動くモーションテクスチャーを作って">
+                <span>💧</span><span>四角箱の中の水 (3面立体連動)</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-blue-950/30 hover:bg-blue-900/50 border border-blue-500/30 text-blue-200 text-[11px] transition flex items-center gap-1" data-prompt="熱帯魚と水草が揺れる透明なアクアリウム水槽、気泡が立ち上る動くテクスチャー">
+                <span>🐠</span><span>アクアリウム熱帯魚水槽</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-orange-950/30 hover:bg-orange-900/50 border border-orange-500/30 text-orange-200 text-[11px] transition flex items-center gap-1" data-prompt="四角箱の中で激しく燃え盛る炎と噴き出すマグマ、火の粉が舞うモーションテクスチャー">
+                <span>🔥</span><span>燃え盛る炎とマグマ</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-indigo-950/30 hover:bg-indigo-900/50 border border-indigo-500/30 text-indigo-200 text-[11px] transition flex items-center gap-1" data-prompt="深宇宙の星雲と回転する銀河、揺らめく神秘的なオーロラ">
+                <span>🌌</span><span>深宇宙と銀河オーロラ</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-cyan-950/30 hover:bg-cyan-900/50 border border-cyan-500/30 text-cyan-200 text-[11px] transition flex items-center gap-1" data-prompt="立体サイバーホログラムと光のネオングリッド、デジタルデータストリーム">
+                <span>⚡</span><span>サイバーネオングリッド</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-pink-950/30 hover:bg-pink-900/50 border border-pink-500/30 text-pink-200 text-[11px] transition flex items-center gap-1" data-prompt="春の風に乗って箱の中を立体的に舞い散る桜の花びらと光の軌跡">
+                <span>🌸</span><span>舞い散る桜吹雪</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-yellow-950/30 hover:bg-yellow-900/50 border border-yellow-500/30 text-yellow-200 text-[11px] transition flex items-center gap-1" data-prompt="夜空に次々と打ち上がる色鮮やかな大輪の花火と煌めく光の粒子">
+                <span>🎆</span><span>夜空の打ち上げ花火</span>
+              </button>
+              <button class="ai-prompt-chip px-2.5 py-1 rounded-lg bg-purple-950/30 hover:bg-purple-900/50 border border-purple-500/30 text-purple-200 text-[11px] transition flex items-center gap-1" data-prompt="光の屈折と反射で万華鏡のように美しく輝く回転クリスタル">
+                <span>💎</span><span>万華鏡クリスタル</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: 詳細設定 (アコーディオン) -->
+        <details class="group border border-white/10 rounded-xl p-3 bg-white/[0.02]">
+          <summary class="flex items-center justify-between cursor-pointer list-none text-xs text-slate-300 font-medium">
+            <div class="flex items-center gap-2">
+              <span>⚙️ 詳細設定・演出オプション</span>
+              <span class="text-[10px] text-teal-400">(速度・配色・立体連動)</span>
+            </div>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform text-xs">▼</span>
+          </summary>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-white/5">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">アニメーション速度</label>
+              <select id="aiSpeedSelect" class="w-full bg-slate-950 border border-white/10 rounded-lg p-1.5 text-xs text-slate-200 outline-none">
+                <option value="slow">ゆったり (0.6x)</option>
+                <option value="normal" selected>普通 (1.0x)</option>
+                <option value="fast">スピーディ (1.6x)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">カラーテーマ</label>
+              <select id="aiColorThemeSelect" class="w-full bg-slate-950 border border-white/10 rounded-lg p-1.5 text-xs text-slate-200 outline-none">
+                <option value="auto" selected>自動 (プロンプト解析)</option>
+                <option value="deep_blue">ディープアクア / 海</option>
+                <option value="cyber_neon">サイバーネオン</option>
+                <option value="fire_amber">炎 / アンバー</option>
+                <option value="emerald_nature">エメラルドグリーン</option>
+                <option value="cosmic_purple">コズミックパープル</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">立体3D連動モード</label>
+              <select id="aiCoordModeSelect" class="w-full bg-slate-950 border border-white/10 rounded-lg p-1.5 text-xs text-slate-200 outline-none">
+                <option value="coordinated" selected>ON (各面を立体空間で同期)</option>
+                <option value="independent">OFF (各面それぞれ独立)</option>
+              </select>
+            </div>
+          </div>
+          <!-- Optional API Key for LLM Code Generation -->
+          <div class="mt-3 pt-3 border-t border-white/5 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-400">外部AI (Gemini / OpenAI API) 連携 (任意):</span>
+              <span class="text-[9px] text-teal-400">※ 未設定でも内蔵AIエンジンが即座に生成します</span>
+            </div>
+            <div class="flex gap-2">
+              <input type="password" id="aiApiKeyInput" placeholder="Gemini API Key または OpenAI API Key (任意)" class="flex-1 bg-slate-950 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-200 outline-none">
+              <select id="aiApiProviderSelect" class="bg-slate-950 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200 outline-none">
+                <option value="gemini">Gemini</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <!-- Generation Progress / Status Area -->
+        <div id="aiProgressArea" class="hidden flex flex-col gap-2 p-3 rounded-xl bg-teal-950/25 border border-teal-500/30">
+          <div class="flex items-center justify-between text-xs text-teal-300">
+            <span id="aiProgressStatusText" class="font-medium flex items-center gap-2">
+              <span class="inline-block w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></span>
+              プロンプトを解析中...
+            </span>
+            <span id="aiProgressPercent" class="font-mono text-[11px]">45%</span>
+          </div>
+          <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+            <div id="aiProgressBar" class="bg-gradient-to-r from-teal-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Generated Result Preview / Actions (Visible after generation) -->
+        <div id="aiResultArea" class="hidden flex flex-col gap-2 p-3 rounded-xl bg-slate-950/70 border border-teal-500/40">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+              <span>🎉</span><span id="aiResultTitle">AIモーションテクスチャーを生成しました！</span>
+            </span>
+            <span class="text-[10px] text-slate-400">指定された各面に適用中</span>
+          </div>
+          <div id="aiResultThumbnailsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1"></div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-white/10 flex items-center justify-between bg-slate-950/80">
+        <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
+          <span>リアルタイムWebGL即時送出</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="aiCancelBtn" class="px-3.5 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-white/5 rounded-lg border border-white/10 transition">閉じる</button>
+          <button id="aiGenerateBtn" class="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-teal-500 via-indigo-600 to-purple-600 hover:from-teal-400 hover:via-indigo-500 hover:to-purple-500 rounded-lg shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition flex items-center gap-2">
+            <span>✨</span><span>AIモーションテクスチャーを生成して適用</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= LOGIC & WEBGL SCRIPT ================= -->
   <script>
     "use strict";
@@ -1299,8 +1569,10 @@
     // 一覧情報(key/name/種別/blobKey)のみをlocalStorageに永続化する。
     const CUSTOM_TEXTURE_STORAGE_KEY = 'pmap_v4_custom_textures';
     const CUSTOM_MOTION_STORAGE_KEY  = 'pmap_v4_custom_motions';
+    const AI_MOTION_STORAGE_KEY      = 'pmap_v4_ai_motions';
     let customTextures = []; // { key, name, mediaKind: 'image'|'video', blobKey }
     let customMotions   = []; // { key, name, blobKey } (常にvideo)
+    let aiGeneratedMotions = []; // { key, name, prompt, theme, role, speed, colorTheme, coordMode, timestamp }
 
     // ================= Motion Texture Library (プロシージャル生成の“動く”テクスチャ) =================
     // 実際の動画ファイルではなく、Canvas 2D上でリアルタイムに描画するアニメーションパターン集。
@@ -2868,6 +3140,40 @@
     const uniScaleLabel = document.getElementById('uniScaleLabel');
     const shapeAnimSelect = document.getElementById('shapeAnimSelect');
     const fillColorSectionTitle = document.getElementById('fillColorSectionTitle');
+    
+    // AI Motion Texture Studio DOM
+    const openAiMotionBtn = document.getElementById('openAiMotionBtn');
+    const mediaAiMotionBtn = document.getElementById('mediaAiMotionBtn');
+    const layerAiMotionBtn = document.getElementById('layerAiMotionBtn');
+    const aiMotionModal = document.getElementById('aiMotionModal');
+    const closeAiModalBtn = document.getElementById('closeAiModalBtn');
+    const aiCancelBtn = document.getElementById('aiCancelBtn');
+    const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+    const aiPromptInput = document.getElementById('aiPromptInput');
+    const aiClearPromptBtn = document.getElementById('aiClearPromptBtn');
+    const aiSurfacesList = document.getElementById('aiSurfacesList');
+    const aiNoSurfacesHint = document.getElementById('aiNoSurfacesHint');
+    const aiSelectedSurfacesCount = document.getElementById('aiSelectedSurfacesCount');
+    const aiSelectAllBtn = document.getElementById('aiSelectAllBtn');
+    const aiSelectCubeBtn = document.getElementById('aiSelectCubeBtn');
+    const aiSelectActiveBtn = document.getElementById('aiSelectActiveBtn');
+    const aiClearSelectBtn = document.getElementById('aiClearSelectBtn');
+    const aiAddCubePresetBtn = document.getElementById('aiAddCubePresetBtn');
+    const aiSpeedSelect = document.getElementById('aiSpeedSelect');
+    const aiColorThemeSelect = document.getElementById('aiColorThemeSelect');
+    const aiCoordModeSelect = document.getElementById('aiCoordModeSelect');
+    const aiApiKeyInput = document.getElementById('aiApiKeyInput');
+    const aiApiProviderSelect = document.getElementById('aiApiProviderSelect');
+    const aiProgressArea = document.getElementById('aiProgressArea');
+    const aiProgressStatusText = document.getElementById('aiProgressStatusText');
+    const aiProgressBar = document.getElementById('aiProgressBar');
+    const aiProgressPercent = document.getElementById('aiProgressPercent');
+    const aiResultArea = document.getElementById('aiResultArea');
+    const aiResultTitle = document.getElementById('aiResultTitle');
+    const aiResultThumbnailsGrid = document.getElementById('aiResultThumbnailsGrid');
+    const aiMotionHistorySection = document.getElementById('aiMotionHistorySection');
+    const aiMotionLibraryGrid = document.getElementById('aiMotionLibraryGrid');
+    const aiGeneratedCount = document.getElementById('aiGeneratedCount');
 
     // Audio analysis DOM
     const musicFileInput = document.getElementById('musicFileInput');
@@ -5980,15 +6286,9 @@
       startMotionThumbLoop();
     }
 
-    // 選択中の投影面へ、プロシージャル生成の「動く」テクスチャを割り当てる。
-    // 実ファイルの読込は発生せず、専用のオフスクリーンcanvasをそのままWebGLへ流し込む(video同様に毎フレーム再アップロード)。
-    function applyMotionTextureToActiveLayer(def) {
-      const layer = getActive();
-      if (!layer || layer.type !== 'shape') {
-        showStatus('⚠️ テクスチャを適用する「四角形」か「円形」のレイヤーをまず選択してください', 'text-amber-400');
-        return;
-      }
-      // 既存の動画メディア(video要素)が割り当てられていた場合は解放する
+    // 任意のレイヤーへモーションテクスチャを割り当てる共通関数
+    function applyMotionTextureToLayer(layer, def) {
+      if (!layer || layer.type !== 'shape') return;
       if (layer.mediaEl && layer.mediaType === 'video' && typeof layer.mediaEl.pause === 'function') {
         layer.mediaEl.pause();
         layer.mediaEl.src = '';
@@ -6002,13 +6302,23 @@
       layer.motionKey = def.key;
       layer.motionStartTime = performance.now();
       layer.mediaReady = true;
-      layer.mediaKey = null; // ファイル本体を持たないため、IndexedDBキー参照は不要
-      layer.textureNeedsUpload = false; // 毎フレームrenderLayer内で再アップロードされる
+      layer.mediaKey = null;
+      layer.textureNeedsUpload = false;
+    }
 
-      document.querySelectorAll('#motionTextureLibraryGrid .motion-thumb').forEach(el => {
+    // 選択中の投影面へ、プロシージャル生成の「動く」テクスチャを割り当てる。
+    function applyMotionTextureToActiveLayer(def) {
+      const layer = getActive();
+      if (!layer || layer.type !== 'shape') {
+        showStatus('⚠️ テクスチャを適用する「四角形」か「円形」のレイヤーをまず選択してください', 'text-amber-400');
+        return;
+      }
+      applyMotionTextureToLayer(layer, def);
+      commitHistory();
+
+      document.querySelectorAll('#motionTextureLibraryGrid .motion-thumb, #aiMotionLibraryGrid .motion-thumb').forEach(el => {
         el.classList.toggle('active-texture', el.dataset.key === def.key);
       });
-      // 投影面の形状(vertices)は一切変更しない。既存の投影面にそのままモーションテクスチャが貼り込まれる。
       renderFrame();
       showStatus(`✨ 「${def.name}」を適用しました`);
       showToast(`🎞️ モーションテクスチャ「${def.name}」を投影面に割り当てました`);
@@ -6024,6 +6334,1271 @@
       try { def.draw(ctx, layer.mediaEl.width, layer.mediaEl.height, t); } catch (e) {}
     }
 
+    // ================= AI Motion Texture Studio ロジック =================
+    let aiPreviewRafId = null;
+    let selectedAiSurfaceIds = new Set();
+    let surfaceRolesMap = {}; // layerId -> role ('top'|'left'|'right'|'front'|'generic')
+
+    function saveAiMotionsToStorage() {
+      try {
+        localStorage.setItem(AI_MOTION_STORAGE_KEY, JSON.stringify(aiGeneratedMotions));
+      } catch (e) {
+        console.warn('AIモーション一覧の保存に失敗しました', e);
+      }
+    }
+
+    function loadAiMotionsFromStorage() {
+      try {
+        const raw = localStorage.getItem(AI_MOTION_STORAGE_KEY);
+        aiGeneratedMotions = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(aiGeneratedMotions)) aiGeneratedMotions = [];
+
+        // 保存されたAIモーションから描画関数を復元して MOTION_TEXTURE_LIBRARY に再登録
+        aiGeneratedMotions.forEach(item => {
+          if (!MOTION_TEXTURE_LIBRARY.find(m => m.key === item.key)) {
+            const drawer = createCoordinatedDrawFunction(item.theme, item.role, item.faceIndex || 0, item.totalFaces || 1, {
+              speed: item.speed,
+              colorTheme: item.colorTheme,
+              coordMode: item.coordMode,
+              prompt: item.prompt
+            });
+            MOTION_TEXTURE_LIBRARY.push({
+              key: item.key,
+              name: item.name,
+              isAi: true,
+              aiMeta: item,
+              draw: drawer
+            });
+          }
+        });
+      } catch (e) {
+        console.warn('AIモーション一覧の読込に失敗しました', e);
+        aiGeneratedMotions = [];
+      }
+    }
+
+    async function preloadAiMotionThumbnails() {
+      if (!aiMotionLibraryGrid || !aiMotionHistorySection) return;
+      aiMotionLibraryGrid.innerHTML = '';
+
+      const aiItems = MOTION_TEXTURE_LIBRARY.filter(m => m.isAi);
+      if (aiItems.length === 0) {
+        aiMotionHistorySection.classList.add('hidden');
+        if (aiGeneratedCount) aiGeneratedCount.textContent = '0件';
+        return;
+      }
+
+      aiMotionHistorySection.classList.remove('hidden');
+      if (aiGeneratedCount) aiGeneratedCount.textContent = `${aiItems.length}件`;
+
+      aiItems.forEach(def => {
+        const thumb = document.createElement('div');
+        thumb.className = 'motion-thumb';
+        thumb.title = `${def.name}\nプロンプト: ${def.aiMeta?.prompt || ''}`;
+        thumb.dataset.key = def.key;
+
+        const badge = document.createElement('span');
+        badge.className = 'ai-motion-thumb-badge';
+        badge.textContent = 'AI';
+        thumb.appendChild(badge);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 96; canvas.height = 96;
+        canvas.dataset.key = def.key;
+        thumb.appendChild(canvas);
+
+        const label = document.createElement('div');
+        label.className = 'texture-label';
+        label.textContent = def.name;
+        thumb.appendChild(label);
+
+        // 削除ボタン
+        const removeBtn = document.createElement('div');
+        removeBtn.className = 'custom-tex-remove-btn';
+        removeBtn.innerHTML = '×';
+        removeBtn.title = 'このAIモーションを削除';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteAiMotionTexture(def.key);
+        });
+        thumb.appendChild(removeBtn);
+
+        thumb.addEventListener('click', () => applyMotionTextureToActiveLayer(def));
+        aiMotionLibraryGrid.appendChild(thumb);
+      });
+      startMotionThumbLoop();
+    }
+
+    function deleteAiMotionTexture(key) {
+      const idx = MOTION_TEXTURE_LIBRARY.findIndex(m => m.key === key);
+      if (idx !== -1) MOTION_TEXTURE_LIBRARY.splice(idx, 1);
+      aiGeneratedMotions = aiGeneratedMotions.filter(m => m.key !== key);
+      saveAiMotionsToStorage();
+      preloadAiMotionThumbnails();
+      showToast('🗑️ AIモーションテクスチャーを削除しました');
+    }
+
+    // 投影面の自動判定 (Role: 'top' | 'left' | 'right' | 'front' | 'generic')
+    function detectSurfaceRole(layer, allSurfaces) {
+      const name = (layer.name || '').toLowerCase();
+      if (name.includes('天') || name.includes('top') || name.includes('上') || name.includes('屋根')) return 'top';
+      if (name.includes('左') || name.includes('left')) return 'left';
+      if (name.includes('右') || name.includes('right')) return 'right';
+      if (name.includes('前') || name.includes('front') || name.includes('正')) return 'front';
+
+      // 名前から判別できない場合は幾何学的位置で判定
+      if (allSurfaces.length === 3) {
+        // Y重心が最も上（小さい）→ top
+        // 残り2面のうちX重心が左側 → left, 右側 → right
+        const sortedByY = [...allSurfaces].sort((a, b) => a.center.y - b.center.y);
+        if (layer.id === sortedByY[0].id) return 'top';
+        const remaining = [sortedByY[1], sortedByY[2]].sort((a, b) => a.center.x - b.center.x);
+        if (layer.id === remaining[0].id) return 'left';
+        if (layer.id === remaining[1].id) return 'right';
+      } else if (allSurfaces.length === 2) {
+        const sortedByX = [...allSurfaces].sort((a, b) => a.center.x - b.center.x);
+        if (layer.id === sortedByX[0].id) return 'left';
+        if (layer.id === sortedByX[1].id) return 'right';
+      }
+      return 'front';
+    }
+
+    function openAiMotionModal() {
+      if (!aiMotionModal) return;
+      aiMotionModal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        aiMotionModal.classList.remove('opacity-0');
+      });
+
+      // 投影面の初期選択
+      refreshAiModalSurfaces();
+
+      // 現在選択中のレイヤーがあればそれを初期選択
+      if (selectedAiSurfaceIds.size === 0 && activeId) {
+        const act = layers.find(l => l.id === activeId && l.type === 'shape');
+        if (act) selectedAiSurfaceIds.add(act.id);
+      }
+
+      // キューブプリセットがある場合、3面をデフォルト選択
+      const cubeLayers = layers.filter(l => l.type === 'shape' && (l.name.includes('キューブ') || l.name.includes('Cube')));
+      if (cubeLayers.length >= 3 && selectedAiSurfaceIds.size <= 1) {
+        selectedAiSurfaceIds.clear();
+        cubeLayers.slice(0, 3).forEach(l => selectedAiSurfaceIds.add(l.id));
+      }
+
+      // プロンプト初期値
+      if (!aiPromptInput.value.trim()) {
+        aiPromptInput.value = '四角箱の中に水が入っていて、動くモーションテクスチャーを作って';
+      }
+
+      updateAiSelectedCount();
+      refreshAiModalSurfaces();
+    }
+
+    function closeAiMotionModal() {
+      if (!aiMotionModal) return;
+      aiMotionModal.classList.add('opacity-0');
+      setTimeout(() => {
+        aiMotionModal.classList.add('hidden');
+        if (aiPreviewRafId) {
+          cancelAnimationFrame(aiPreviewRafId);
+          aiPreviewRafId = null;
+        }
+      }, 200);
+    }
+
+    function refreshAiModalSurfaces() {
+      if (!aiSurfacesList) return;
+      aiSurfacesList.innerHTML = '';
+
+      const shapeLayers = layers.filter(l => l.type === 'shape');
+      if (shapeLayers.length === 0) {
+        if (aiNoSurfacesHint) aiNoSurfacesHint.classList.remove('hidden');
+        aiSurfacesList.classList.add('hidden');
+        updateAiSelectedCount();
+        return;
+      }
+
+      if (aiNoSurfacesHint) aiNoSurfacesHint.classList.add('hidden');
+      aiSurfacesList.classList.remove('hidden');
+
+      shapeLayers.forEach(layer => {
+        const isSelected = selectedAiSurfaceIds.has(layer.id);
+        const detectedRole = surfaceRolesMap[layer.id] || detectSurfaceRole(layer, shapeLayers);
+        surfaceRolesMap[layer.id] = detectedRole;
+
+        const card = document.createElement('div');
+        card.className = `ai-surface-card flex flex-col gap-1.5 ${isSelected ? 'selected' : ''}`;
+        card.dataset.id = layer.id;
+
+        // 上段: チェックボックス + カラースウォッチ + 名前
+        const topRow = document.createElement('div');
+        topRow.className = 'flex items-center gap-2';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isSelected;
+        checkbox.className = 'w-3.5 h-3.5 accent-teal-500 rounded bg-slate-900 border-white/20 pointer-events-none';
+
+        const swatch = document.createElement('span');
+        swatch.className = 'w-2.5 h-2.5 rounded-full flex-shrink-0';
+        swatch.style.background = layer.color;
+
+        const nameLabel = document.createElement('span');
+        nameLabel.className = 'text-xs font-semibold text-slate-100 truncate flex-1';
+        nameLabel.textContent = layer.name;
+
+        topRow.appendChild(checkbox);
+        topRow.appendChild(swatch);
+        topRow.appendChild(nameLabel);
+
+        // 下段: 役割（Role）セレクト + 頂点数
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'flex items-center justify-between gap-1 text-[10px] text-slate-400';
+
+        const roleSelect = document.createElement('select');
+        roleSelect.className = 'bg-slate-900/90 border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-teal-300 outline-none cursor-pointer';
+        roleSelect.innerHTML = `
+          <option value="top" ${detectedRole === 'top' ? 'selected' : ''}>天面 (Top)</option>
+          <option value="left" ${detectedRole === 'left' ? 'selected' : ''}>左面 (Left)</option>
+          <option value="right" ${detectedRole === 'right' ? 'selected' : ''}>右面 (Right)</option>
+          <option value="front" ${detectedRole === 'front' ? 'selected' : ''}>正面 (Front)</option>
+          <option value="generic" ${detectedRole === 'generic' ? 'selected' : ''}>一般面</option>
+        `;
+        roleSelect.addEventListener('click', e => e.stopPropagation());
+        roleSelect.addEventListener('change', e => {
+          surfaceRolesMap[layer.id] = e.target.value;
+        });
+
+        const vInfo = document.createElement('span');
+        vInfo.className = 'font-mono text-[9px] opacity-60';
+        vInfo.textContent = `${layer.vertices.length}頂点`;
+
+        bottomRow.appendChild(roleSelect);
+        bottomRow.appendChild(vInfo);
+
+        card.appendChild(topRow);
+        card.appendChild(bottomRow);
+
+        card.addEventListener('click', () => {
+          if (selectedAiSurfaceIds.has(layer.id)) {
+            selectedAiSurfaceIds.delete(layer.id);
+            card.classList.remove('selected');
+            checkbox.checked = false;
+          } else {
+            selectedAiSurfaceIds.add(layer.id);
+            card.classList.add('selected');
+            checkbox.checked = true;
+          }
+          updateAiSelectedCount();
+        });
+
+        aiSurfacesList.appendChild(card);
+      });
+
+      updateAiSelectedCount();
+    }
+
+    function updateAiSelectedCount() {
+      const count = selectedAiSurfaceIds.size;
+      if (aiSelectedSurfacesCount) {
+        if (count === 3) {
+          aiSelectedSurfacesCount.textContent = `3面選択中 (3D立体連動モード)`;
+          aiSelectedSurfacesCount.className = 'text-[10px] px-2 py-0.5 rounded-full bg-teal-500/25 text-teal-300 font-bold border border-teal-500/40 animate-pulse';
+        } else {
+          aiSelectedSurfacesCount.textContent = `${count}面選択中`;
+          aiSelectedSurfacesCount.className = 'text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-semibold border border-teal-500/30';
+        }
+      }
+    }
+
+    // プロンプトの意味解析 & テーマ・パラメータ決定
+    function analyzeMotionPrompt(promptText, colorThemePref) {
+      const p = (promptText || '').toLowerCase();
+      let theme = 'generic';
+
+      if (/(熱帯魚|魚|水草|フィッシュ|fish)/i.test(p)) {
+        theme = 'aquarium';
+      } else if (/(水|水槽|波|泡|アクア|海|ocean|water|aqua|tank|fluid|liquid|box)/i.test(p)) {
+        theme = 'water_box';
+      } else if (/(炎|火|マグマ|燃え|溶岩|火柱|火の粉|fire|flame|magma|lava|burn)/i.test(p)) {
+        theme = 'fire';
+      } else if (/(宇宙|星|銀河|オーロラ|ブラックホール|ワームホール|space|galaxy|star|aurora|cosmos)/i.test(p)) {
+        theme = 'space';
+      } else if (/(サイバー|ネオン|マトリックス|デジタル|未来|回路|グリッド|cyber|neon|matrix|tech|grid)/i.test(p)) {
+        theme = 'cyber';
+      } else if (/(桜|花びら|春|風|sakura|cherry|blossom|petal)/i.test(p)) {
+        theme = 'sakura';
+      } else if (/(花火|打ち上げ|firework|fireworks|spark)/i.test(p)) {
+        theme = 'fireworks';
+      } else if (/(万華鏡|クリスタル|宝石|プリズム|幾何学|水晶|kaleidoscope|crystal|gem|prism)/i.test(p)) {
+        theme = 'kaleidoscope';
+      } else if (/(雨|窓|水滴|しずく|rain|drop|glass)/i.test(p)) {
+        theme = 'rain';
+      }
+
+      // カラーテーマの解決
+      let colorTheme = colorThemePref;
+      if (!colorTheme || colorTheme === 'auto') {
+        if (theme === 'water_box' || theme === 'aquarium') colorTheme = 'deep_blue';
+        else if (theme === 'fire') colorTheme = 'fire_amber';
+        else if (theme === 'cyber') colorTheme = 'cyber_neon';
+        else if (theme === 'space') colorTheme = 'cosmic_purple';
+        else if (theme === 'sakura') colorTheme = 'pink';
+        else if (theme === 'fireworks') colorTheme = 'fire_amber';
+        else if (theme === 'kaleidoscope') colorTheme = 'rainbow';
+        else colorTheme = 'deep_blue';
+      }
+
+      return { theme, colorTheme };
+    }
+
+    // ================= 高度なプロシージャル描画関数ファクトリ =================
+    function createCoordinatedDrawFunction(theme, role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      const colorTheme = options.colorTheme || 'deep_blue';
+
+      // 1. 水槽・四角箱の中の水 (water_box)
+      if (theme === 'water_box' || theme === 'aquarium') {
+        return createWaterBoxFaceDrawer(theme, role, faceIndex, totalFaces, options);
+      }
+      // 2. 燃え盛る炎とマグマ (fire)
+      if (theme === 'fire') {
+        return createFireFaceDrawer(role, faceIndex, totalFaces, options);
+      }
+      // 3. 深宇宙と銀河オーロラ (space)
+      if (theme === 'space') {
+        return createSpaceFaceDrawer(role, faceIndex, totalFaces, options);
+      }
+      // 4. サイバーネオングリッド (cyber)
+      if (theme === 'cyber') {
+        return createCyberFaceDrawer(role, faceIndex, totalFaces, options);
+      }
+      // 5. 舞い散る桜吹雪 (sakura)
+      if (theme === 'sakura') {
+        return createSakuraFaceDrawer(role, faceIndex, totalFaces, options);
+      }
+      // 6. 夜空の花火 (fireworks)
+      if (theme === 'fireworks') {
+        return createFireworksFaceDrawer(role, faceIndex, totalFaces, options);
+      }
+      // 7. 万華鏡クリスタル (kaleidoscope)
+      if (theme === 'kaleidoscope') {
+        return createKaleidoscopeFaceDrawer(role, faceIndex, totalFaces, options);
+      }
+      // 8. 汎用プロシージャルAI (generic / rain etc.)
+      return createGenericProceduralDrawer(theme, role, faceIndex, totalFaces, options);
+    }
+
+    // --- フラグシップ演出: 四角箱の中の水 & アクアリウム ---
+    function createWaterBoxFaceDrawer(theme, role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      const colorTheme = options.colorTheme || 'deep_blue';
+      const isAquarium = theme === 'aquarium';
+
+      let cWaterTop = 'rgba(0, 180, 216, 0.88)';
+      let cWaterMid = 'rgba(0, 119, 182, 0.94)';
+      let cWaterDeep = 'rgba(3, 4, 94, 0.98)';
+      let cCaustic = 'rgba(180, 245, 255, 0.12)';
+      let cHighlight = 'rgba(255, 255, 255, 0.95)';
+
+      if (colorTheme === 'cyber_neon') {
+        cWaterTop = 'rgba(0, 240, 255, 0.85)';
+        cWaterMid = 'rgba(20, 30, 80, 0.95)';
+        cWaterDeep = 'rgba(5, 5, 25, 0.98)';
+        cCaustic = 'rgba(0, 255, 240, 0.2)';
+      } else if (colorTheme === 'emerald_nature') {
+        cWaterTop = 'rgba(46, 196, 182, 0.88)';
+        cWaterMid = 'rgba(12, 115, 110, 0.94)';
+        cWaterDeep = 'rgba(3, 40, 42, 0.98)';
+        cCaustic = 'rgba(180, 255, 220, 0.15)';
+      }
+
+      // 気泡シード
+      const bubbleCount = role === 'top' ? 12 : 36;
+      const bubbles = [];
+      for (let i = 0; i < bubbleCount; i++) {
+        bubbles.push({
+          xRel: _mtxPrng(i * 17.3 + (role === 'right' ? 50 : 0)) * 0.9 + 0.05,
+          speed: 0.15 + _mtxPrng(i * 23.7) * 0.25,
+          radius: 2 + _mtxPrng(i * 7.1) * 5.5,
+          wobbleFreq: 1.5 + _mtxPrng(i * 11.2) * 2.0,
+          wobbleAmp: 4 + _mtxPrng(i * 3.3) * 8,
+          phase: _mtxPrng(i * 31.9) * Math.PI * 2
+        });
+      }
+
+      // 熱帯魚シード (アクアリウム用)
+      const fishCount = isAquarium ? (role === 'top' ? 3 : 5) : 0;
+      const fishes = [];
+      for (let f = 0; f < fishCount; f++) {
+        fishes.push({
+          xRel: _mtxPrng(f * 13.1 + 10) * 0.8 + 0.1,
+          yRel: 0.45 + _mtxPrng(f * 29.3) * 0.4,
+          speedX: (f % 2 === 0 ? 1 : -1) * (0.08 + _mtxPrng(f * 5.7) * 0.08),
+          size: 14 + _mtxPrng(f * 19.1) * 12,
+          color: (f % 3 === 0) ? '#ff6b35' : ((f % 3 === 1) ? '#00f0ff' : '#ffea00'),
+          phase: _mtxPrng(f * 43.1) * Math.PI * 2
+        });
+      }
+
+      return function draw(ctx, w, h, t) {
+        const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.15;
+        const simTime = t * speed;
+
+        ctx.fillStyle = '#020510';
+        ctx.fillRect(0, 0, w, h);
+
+        if (role === 'top') {
+          // ================= 天面 (水面を上から見下ろす) =================
+          const topGrad = ctx.createRadialGradient(w * 0.5, h * 0.5, 10, w * 0.5, h * 0.5, Math.max(w, h) * 0.65);
+          topGrad.addColorStop(0, cWaterTop);
+          topGrad.addColorStop(0.7, cWaterMid);
+          topGrad.addColorStop(1, cWaterDeep);
+          ctx.fillStyle = topGrad;
+          ctx.fillRect(0, 0, w, h);
+
+          // 水面の波紋リップル
+          ctx.save();
+          const rippleSteps = 10;
+          for (let r = 1; r <= rippleSteps; r++) {
+            const radProgress = (simTime * 0.22 + r / rippleSteps) % 1;
+            const radius = radProgress * Math.max(w, h) * 0.65;
+            const alpha = Math.sin(radProgress * Math.PI) * 0.35 * (1 + beat * 0.6);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.lineWidth = 2 + beat * 2.5;
+            ctx.beginPath();
+            const segs = 32;
+            for (let s = 0; s <= segs; s++) {
+              const ang = (s / segs) * Math.PI * 2;
+              const distMod = 1 + 0.08 * Math.sin(ang * 4 + simTime * 2.0) + 0.05 * Math.cos(ang * 6 - simTime * 1.5);
+              const px = w * 0.5 + Math.cos(ang) * (radius * distMod);
+              const py = h * 0.5 + Math.sin(ang) * (radius * distMod);
+              if (s === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+
+          // 底面の焦散光（コースティクス揺らめき）
+          ctx.strokeStyle = cCaustic;
+          ctx.lineWidth = 1.5;
+          for (let cx = 30; cx < w; cx += 45) {
+            ctx.beginPath();
+            for (let cy = 0; cy <= h; cy += 15) {
+              const offX = cx + Math.sin(cy * 0.03 + simTime * 1.8) * 14 + Math.cos(cy * 0.06 - simTime * 1.2) * 8;
+              if (cy === 0) ctx.moveTo(offX, cy);
+              else ctx.lineTo(offX, cy);
+            }
+            ctx.stroke();
+          }
+
+          // 魚の描画 (天面見下ろし)
+          fishes.forEach(fish => {
+            const fx = ((fish.xRel + simTime * fish.speedX) % 1.2 + 1.2) % 1.2 - 0.1;
+            const px = fx * w;
+            const py = (fish.yRel + Math.sin(simTime * 1.5 + fish.phase) * 0.08) * h;
+            ctx.save();
+            ctx.fillStyle = fish.color;
+            ctx.beginPath();
+            ctx.ellipse(px, py, fish.size * 0.8, fish.size * 0.35, (fish.speedX > 0 ? 0 : Math.PI), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+
+          // ガラス枠（フチ）の表面張力ハイライト
+          ctx.strokeStyle = cHighlight;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(3, 3, w - 6, h - 6);
+          ctx.restore();
+
+        } else {
+          // ================= 側面 (左面・右面・前面) =================
+          const yBase = h * 0.32;
+          const tilt = Math.sin(simTime * 0.9) * (h * 0.038) * (1 + beat * 0.5);
+
+          // u座標の基準: 左面は [0, 1]、右面は [1, 2]（中央の稜線で完全連続）
+          const uOffset = (role === 'right') ? 1.0 : 0.0;
+
+          function getWaterY(normX) {
+            const uGlobal = uOffset + normX;
+            const wave1 = Math.sin(simTime * 2.2 + uGlobal * Math.PI * 2.2) * (h * 0.034 * (1 + beat * 0.7));
+            const wave2 = Math.sin(simTime * 4.8 + uGlobal * Math.PI * 5.0) * (h * 0.012);
+            const wave3 = Math.cos(simTime * 1.4 - uGlobal * Math.PI * 1.6) * (h * 0.018);
+            const tiltY = tilt * (uGlobal - 1.0) * 1.8;
+            return yBase + tiltY + wave1 + wave2 + wave3;
+          }
+
+          // 1. 水中グラデーションの描画
+          const waterGrad = ctx.createLinearGradient(0, yBase - 20, 0, h);
+          waterGrad.addColorStop(0, cWaterTop);
+          waterGrad.addColorStop(0.35, cWaterMid);
+          waterGrad.addColorStop(1, cWaterDeep);
+
+          ctx.fillStyle = waterGrad;
+          ctx.beginPath();
+          ctx.moveTo(0, h);
+          const steps = 40;
+          for (let i = 0; i <= steps; i++) {
+            const nx = i / steps;
+            const px = nx * w;
+            const py = getWaterY(nx);
+            if (i === 0) ctx.lineTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.lineTo(w, h);
+          ctx.closePath();
+          ctx.fill();
+
+          // 2. 水中ゴッドレイ（光線）
+          ctx.save();
+          const rayAngle = (role === 'left' ? 0.35 : -0.25);
+          for (let r = 0; r < 4; r++) {
+            const rx = (w * (0.2 + r * 0.22) + Math.sin(simTime * 0.6 + r) * 20);
+            const rayGrad = ctx.createLinearGradient(rx, yBase, rx + Math.sin(rayAngle) * h, h);
+            rayGrad.addColorStop(0, 'rgba(255, 255, 255, 0.16)');
+            rayGrad.addColorStop(0.6, 'rgba(100, 230, 255, 0.06)');
+            rayGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = rayGrad;
+            ctx.beginPath();
+            ctx.moveTo(rx - 15, yBase);
+            ctx.lineTo(rx + 25, yBase);
+            ctx.lineTo(rx + Math.sin(rayAngle) * h + 50, h);
+            ctx.lineTo(rx + Math.sin(rayAngle) * h - 40, h);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+
+          // 3. 水底コースティクス（焦散網目）
+          ctx.save();
+          ctx.strokeStyle = cCaustic;
+          ctx.lineWidth = 1.5;
+          for (let cx = 20; cx < w; cx += 40) {
+            ctx.beginPath();
+            const startY = getWaterY(cx / w) + 15;
+            for (let cy = startY; cy <= h; cy += 12) {
+              const caX = cx + Math.sin(cy * 0.04 + simTime * 2.0 + uOffset * 2) * 12 + Math.cos(cy * 0.08 - simTime * 1.5) * 6;
+              if (cy === startY) ctx.moveTo(caX, cy);
+              else ctx.lineTo(caX, cy);
+            }
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          // 4. 水草 (アクアリウム用)
+          if (isAquarium) {
+            ctx.save();
+            const weeds = [0.2, 0.5, 0.8];
+            weeds.forEach((wxRel, wi) => {
+              const wx = wxRel * w;
+              ctx.strokeStyle = 'rgba(46, 196, 100, 0.75)';
+              ctx.lineWidth = 4;
+              ctx.beginPath();
+              ctx.moveTo(wx, h);
+              for (let y = h; y >= h * 0.5; y -= 15) {
+                const off = Math.sin(simTime * 1.8 + y * 0.02 + wi) * (15 + (h - y) * 0.08);
+                ctx.lineTo(wx + off, y);
+              }
+              ctx.stroke();
+            });
+            ctx.restore();
+          }
+
+          // 5. 熱帯魚 (アクアリウム用)
+          fishes.forEach(fish => {
+            const dir = fish.speedX > 0 ? 1 : -1;
+            const fx = ((fish.xRel + simTime * fish.speedX) % 1.3 + 1.3) % 1.3 - 0.15;
+            const px = fx * w;
+            const py = (fish.yRel + Math.sin(simTime * 2.0 + fish.phase) * 0.05) * h;
+            const waterSurfaceY = getWaterY(Math.max(0, Math.min(1, fx)));
+            if (py < waterSurfaceY + 15) return;
+
+            ctx.save();
+            ctx.translate(px, py);
+            if (dir < 0) ctx.scale(-1, 1);
+
+            // 魚体
+            ctx.fillStyle = fish.color;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, fish.size, fish.size * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 尾びれ (揺れる)
+            const tailWobble = Math.sin(simTime * 8 + fish.phase) * 0.3;
+            ctx.fillStyle = fish.color;
+            ctx.beginPath();
+            ctx.moveTo(-fish.size * 0.8, 0);
+            ctx.lineTo(-fish.size * 1.4, -fish.size * 0.4 + tailWobble * 5);
+            ctx.lineTo(-fish.size * 1.4, fish.size * 0.4 + tailWobble * 5);
+            ctx.closePath();
+            ctx.fill();
+
+            // 目のハイライト
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(fish.size * 0.4, -fish.size * 0.1, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(fish.size * 0.45, -fish.size * 0.1, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+
+          // 6. 気泡（Bubbles）の上昇シミュレーション
+          bubbles.forEach(b => {
+            const bx = (b.xRel * w) + Math.sin(simTime * b.wobbleFreq + b.phase) * b.wobbleAmp;
+            const waterSurfaceY = getWaterY(Math.max(0, Math.min(1, bx / w)));
+            const waterHeight = h - waterSurfaceY;
+            if (waterHeight <= 10) return;
+
+            const cycle = (simTime * b.speed + b.phase / (Math.PI * 2)) % 1;
+            const by = h - (cycle * waterHeight);
+
+            if (by >= waterSurfaceY) {
+              const alpha = Math.min(1.0, (by - waterSurfaceY) / 30);
+              ctx.save();
+              ctx.strokeStyle = `rgba(255, 255, 255, ${0.75 * alpha})`;
+              ctx.fillStyle = `rgba(180, 240, 255, ${0.28 * alpha})`;
+              ctx.lineWidth = 1.2;
+              ctx.beginPath();
+              ctx.arc(bx, by, b.radius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+
+              // 気泡のハイライト光点
+              ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * alpha})`;
+              ctx.beginPath();
+              ctx.arc(bx - b.radius * 0.35, by - b.radius * 0.35, b.radius * 0.28, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+          });
+
+          // 7. 水面境界のハイライト線 & 表面張力グロー
+          ctx.save();
+          ctx.strokeStyle = cHighlight;
+          ctx.lineWidth = 3 + beat * 2;
+          ctx.shadowColor = '#48cae4';
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          for (let i = 0; i <= steps; i++) {
+            const nx = i / steps;
+            const px = nx * w;
+            const py = getWaterY(nx);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // 8. 水上のガラス壁面反射 & 屈折の陰影
+          const airGrad = ctx.createLinearGradient(0, 0, 0, yBase);
+          airGrad.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+          airGrad.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+          ctx.fillStyle = airGrad;
+          ctx.fillRect(0, 0, w, yBase);
+          ctx.restore();
+        }
+      };
+    }
+
+    // --- 燃え盛る炎とマグマ (fire) ---
+    function createFireFaceDrawer(role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      return function draw(ctx, w, h, t) {
+        const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.15;
+        const simTime = t * speed;
+
+        ctx.fillStyle = '#0a0202';
+        ctx.fillRect(0, 0, w, h);
+
+        if (role === 'top') {
+          // 天面: 火口を見下ろすような強烈な熱波と火の粉
+          const radGrad = ctx.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, Math.max(w, h) * 0.6);
+          radGrad.addColorStop(0, '#ffffff');
+          radGrad.addColorStop(0.2, '#ffea00');
+          radGrad.addColorStop(0.5, '#ff4500');
+          radGrad.addColorStop(0.8, '#8b0000');
+          radGrad.addColorStop(1, '#110000');
+          ctx.fillStyle = radGrad;
+          ctx.fillRect(0, 0, w, h);
+
+          // 四方に吹き出す火の粉
+          ctx.save();
+          for (let p = 0; p < 25; p++) {
+            const ang = (p * 14.5 + simTime * 0.8) % (Math.PI * 2);
+            const dist = ((simTime * 80 + p * 15) % (Math.min(w, h) * 0.55));
+            const px = w / 2 + Math.cos(ang) * dist;
+            const py = h / 2 + Math.sin(ang) * dist;
+            ctx.fillStyle = '#ffea00';
+            ctx.beginPath();
+            ctx.arc(px, py, 2.5 + (1 - dist / (Math.min(w, h) * 0.55)) * 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        } else {
+          // 側面: マグマの層と上へ吹き上がる火柱
+          const uOffset = (role === 'right') ? 1.0 : 0.0;
+          const bgGrad = ctx.createLinearGradient(0, h * 0.3, 0, h);
+          bgGrad.addColorStop(0, '#1a0000');
+          bgGrad.addColorStop(0.7, '#800000');
+          bgGrad.addColorStop(1, '#ff3300');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, w, h);
+
+          // 炎の波形レイヤー
+          const flameLayers = 4;
+          for (let fl = 0; fl < flameLayers; fl++) {
+            const flGrad = ctx.createLinearGradient(0, h * (0.2 + fl * 0.15), 0, h);
+            if (fl === 0) {
+              flGrad.addColorStop(0, 'rgba(255, 230, 0, 0.9)');
+              flGrad.addColorStop(1, 'rgba(255, 69, 0, 0.95)');
+            } else {
+              flGrad.addColorStop(0, 'rgba(255, 69, 0, 0.7)');
+              flGrad.addColorStop(1, 'rgba(139, 0, 0, 0.85)');
+            }
+            ctx.fillStyle = flGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            for (let x = 0; x <= w; x += 15) {
+              const u = uOffset + x / w;
+              const flameY = h * (0.35 + fl * 0.12) +
+                Math.sin(simTime * (3 + fl) + u * 4) * (20 + beat * 25) +
+                Math.cos(simTime * 5 - u * 6) * 12;
+              ctx.lineTo(x, flameY);
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // 舞い上がる火の粉
+          ctx.save();
+          for (let s = 0; s < 30; s++) {
+            const sx = ((s * 37.3 + Math.sin(simTime * 2 + s) * 20) % w + w) % w;
+            const cycle = (simTime * (0.3 + (s % 5) * 0.15) + s * 0.1) % 1;
+            const sy = h - cycle * h;
+            ctx.fillStyle = s % 2 === 0 ? '#ffea00' : '#ff4500';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 1.5 + (1 - cycle) * 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      };
+    }
+
+    // --- 深宇宙と銀河オーロラ (space) ---
+    function createSpaceFaceDrawer(role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      return function draw(ctx, w, h, t) {
+        const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.15;
+        const simTime = t * speed;
+
+        ctx.fillStyle = '#030208';
+        ctx.fillRect(0, 0, w, h);
+
+        if (role === 'top') {
+          // 天面: 回転する銀河ワームホール
+          const cx = w / 2, cy = h / 2;
+          ctx.save();
+          for (let arm = 0; arm < 3; arm++) {
+            ctx.strokeStyle = arm === 0 ? 'rgba(147, 51, 234, 0.7)' : (arm === 1 ? 'rgba(59, 130, 246, 0.7)' : 'rgba(236, 72, 153, 0.7)');
+            ctx.lineWidth = 3 + beat * 4;
+            ctx.beginPath();
+            for (let r = 5; r < Math.min(w, h) * 0.55; r += 5) {
+              const ang = r * 0.05 + simTime * 0.6 + (arm * Math.PI * 2 / 3);
+              const px = cx + Math.cos(ang) * r;
+              const py = cy + Math.sin(ang) * r;
+              if (r === 5) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+          // 中心コア
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#9333ea';
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 10 + beat * 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          // 側面: 揺れるオーロラのカーテンと星雲
+          const uOffset = (role === 'right') ? 1.0 : 0.0;
+          // オーロラ光帯
+          ctx.save();
+          for (let a = 0; a < 3; a++) {
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            if (a === 0) {
+              grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+              grad.addColorStop(0.3, 'rgba(34, 197, 94, 0.45)');
+              grad.addColorStop(0.7, 'rgba(168, 85, 247, 0.25)');
+              grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            } else {
+              grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+              grad.addColorStop(0.4, 'rgba(59, 130, 246, 0.35)');
+              grad.addColorStop(0.8, 'rgba(236, 72, 153, 0.2)');
+              grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            }
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            for (let x = 0; x <= w; x += 10) {
+              const u = uOffset + x / w;
+              const y = h * (0.2 + a * 0.15) + Math.sin(simTime * 1.2 + u * 3 + a) * 35;
+              ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            ctx.fill();
+          }
+          // 星屑
+          for (let s = 0; s < 40; s++) {
+            const sx = ((s * 47.7 + uOffset * 200) % w + w) % w;
+            const sy = (s * 31.3) % h;
+            const twinkle = Math.sin(simTime * 3 + s) * 0.5 + 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + twinkle * 0.7})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, (s % 3 === 0 ? 2 : 1) + twinkle, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      };
+    }
+
+    // --- サイバーネオングリッド (cyber) ---
+    function createCyberFaceDrawer(role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      return function draw(ctx, w, h, t) {
+        const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.15;
+        const simTime = t * speed;
+
+        ctx.fillStyle = '#05070f';
+        ctx.fillRect(0, 0, w, h);
+
+        const uOffset = (role === 'right') ? 1.0 : (role === 'top' ? 0.5 : 0.0);
+
+        // サイバーネオングリッド線
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        const gridSize = 40;
+        const offsetGrid = (simTime * 30) % gridSize;
+
+        for (let x = -gridSize; x <= w + gridSize; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x + offsetGrid, 0);
+          ctx.lineTo(x + offsetGrid, h);
+          ctx.stroke();
+        }
+        for (let y = -gridSize; y <= h + gridSize; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y + offsetGrid);
+          ctx.lineTo(w, y + offsetGrid);
+          ctx.stroke();
+        }
+
+        // 3Dワイヤーフレーム立方体風のホログラム
+        const cx = w / 2, cy = h / 2;
+        const sz = Math.min(w, h) * (0.2 + beat * 0.08);
+        const rot = simTime * 1.5;
+        ctx.strokeStyle = '#ff007f';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#ff007f';
+        ctx.shadowBlur = 12;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.strokeRect(-sz, -sz, sz * 2, sz * 2);
+        ctx.rotate(Math.PI / 4);
+        ctx.strokeStyle = '#00f0ff';
+        ctx.shadowColor = '#00f0ff';
+        ctx.strokeRect(-sz * 0.8, -sz * 0.8, sz * 1.6, sz * 1.6);
+        ctx.restore();
+
+        // デジタルデータストリームの走査線
+        const scanY = (simTime * 140) % h;
+        ctx.strokeStyle = 'rgba(0, 255, 200, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, scanY);
+        ctx.lineTo(w, scanY);
+        ctx.stroke();
+        ctx.restore();
+      };
+    }
+
+    // --- 舞い散る桜吹雪 (sakura) ---
+    function createSakuraFaceDrawer(role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      const petals = [];
+      for (let i = 0; i < 35; i++) {
+        petals.push({
+          xRel: _mtxPrng(i * 19.3),
+          yRel: _mtxPrng(i * 27.7),
+          vx: 0.15 + _mtxPrng(i * 7.7) * 0.25,
+          vy: 0.1 + _mtxPrng(i * 11.3) * 0.15,
+          size: 7 + _mtxPrng(i * 3.3) * 8,
+          rotSpeed: 1 + _mtxPrng(i * 5.5) * 3,
+          color: (i % 2 === 0) ? '#ffb7b2' : '#ff758f'
+        });
+      }
+
+      return function draw(ctx, w, h, t) {
+        const simTime = t * speed;
+        ctx.fillStyle = '#120810';
+        ctx.fillRect(0, 0, w, h);
+
+        petals.forEach(p => {
+          const px = ((p.xRel + simTime * p.vx) % 1.2 + 1.2) % 1.2 * w - w * 0.1;
+          const py = ((p.yRel + simTime * p.vy) % 1.2 + 1.2) % 1.2 * h - h * 0.1;
+          const rot = simTime * p.rotSpeed;
+
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(rot);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      };
+    }
+
+    // --- 夜空の花火 (fireworks) ---
+    function createFireworksFaceDrawer(role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      return function draw(ctx, w, h, t) {
+        const simTime = t * speed;
+        ctx.fillStyle = 'rgba(5, 5, 12, 0.25)';
+        ctx.fillRect(0, 0, w, h);
+
+        const cycle = (simTime * 0.6) % 1;
+        const cx = w / 2 + Math.sin(Math.floor(simTime * 0.6) * 17) * (w * 0.25);
+        const cy = h * 0.4 + Math.cos(Math.floor(simTime * 0.6) * 23) * (h * 0.15);
+        const radius = cycle * Math.min(w, h) * 0.45;
+        const alpha = Math.max(0, 1 - cycle * 1.2);
+
+        if (cycle > 0.05) {
+          const sparks = 30;
+          for (let i = 0; i < sparks; i++) {
+            const ang = (i / sparks) * Math.PI * 2;
+            const r = radius * (0.8 + (i % 3) * 0.1);
+            const gravity = cycle * cycle * 40;
+            const px = cx + Math.cos(ang) * r;
+            const py = cy + Math.sin(ang) * r + gravity;
+            ctx.fillStyle = `hsla(${(i * 30 + Math.floor(simTime * 0.6) * 90) % 360}, 100%, 65%, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 2.5 * alpha, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      };
+    }
+
+    // --- 万華鏡クリスタル (kaleidoscope) ---
+    function createKaleidoscopeFaceDrawer(role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      return function draw(ctx, w, h, t) {
+        const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.15;
+        const simTime = t * speed;
+
+        ctx.fillStyle = '#06060c';
+        ctx.fillRect(0, 0, w, h);
+
+        const cx = w / 2, cy = h / 2;
+        const segs = 8;
+        const maxR = Math.min(w, h) * 0.48;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        for (let s = 0; s < segs; s++) {
+          ctx.rotate(Math.PI * 2 / segs);
+          for (let r = 20; r < maxR; r += 35) {
+            const hue = (s * 45 + r * 1.5 + simTime * 60) % 360;
+            ctx.strokeStyle = `hsla(${hue}, 90%, 60%, 0.8)`;
+            ctx.lineWidth = 2 + beat * 3;
+            ctx.beginPath();
+            ctx.moveTo(r, 0);
+            ctx.lineTo(r + 20, Math.sin(simTime * 2 + r) * 20);
+            ctx.lineTo(r, 20);
+            ctx.closePath();
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      };
+    }
+
+    // --- 汎用プロシージャル描画 (generic) ---
+    function createGenericProceduralDrawer(theme, role, faceIndex, totalFaces, options) {
+      const speed = options.speed || 1.0;
+      return function draw(ctx, w, h, t) {
+        const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.15;
+        const simTime = t * speed;
+
+        ctx.fillStyle = '#050711';
+        ctx.fillRect(0, 0, w, h);
+
+        const uOffset = (role === 'right') ? 1.0 : (role === 'top' ? 0.5 : 0.0);
+        const waves = 5;
+        for (let wi = 0; wi < waves; wi++) {
+          const hue = (200 + wi * 35 + simTime * 20) % 360;
+          ctx.strokeStyle = `hsla(${hue}, 85%, 60%, 0.75)`;
+          ctx.lineWidth = 2 + beat * 3;
+          ctx.beginPath();
+          for (let x = 0; x <= w; x += 10) {
+            const u = uOffset + x / w;
+            const y = h * (0.3 + wi * 0.12) + Math.sin(simTime * 2.0 + u * 3.5 + wi) * (20 + beat * 20);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+      };
+    }
+
+    // ================= AIモーション生成パイプライン実行 =================
+    async function executeAiMotionGeneration() {
+      if (selectedAiSurfaceIds.size === 0) {
+        showToast('⚠️ 投影面を少なくとも1面選択してください');
+        return;
+      }
+
+      const promptText = (aiPromptInput.value || '').trim() || '四角箱の中に水が入っていて、動くモーションテクスチャー';
+      const speedMode = aiSpeedSelect.value || 'normal';
+      const speedMap = { slow: 0.65, normal: 1.0, fast: 1.6 };
+      const speed = speedMap[speedMode] || 1.0;
+      const colorThemePref = aiColorThemeSelect.value || 'auto';
+      const coordMode = aiCoordModeSelect.value || 'coordinated';
+      const apiKey = (aiApiKeyInput.value || '').trim();
+      const apiProvider = aiApiProviderSelect.value || 'gemini';
+
+      // 1. プログレス表示開始
+      aiProgressArea.classList.remove('hidden');
+      aiResultArea.classList.add('hidden');
+      aiGenerateBtn.disabled = true;
+      aiGenerateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      aiProgressBar.style.width = '25%';
+      aiProgressPercent.textContent = '25%';
+      aiProgressStatusText.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></span> プロンプトを解析中...';
+
+      await new Promise(r => setTimeout(r, 200));
+
+      // 2. プロンプト解析
+      const { theme, colorTheme } = analyzeMotionPrompt(promptText, colorThemePref);
+
+      aiProgressBar.style.width = '60%';
+      aiProgressPercent.textContent = '60%';
+      aiProgressStatusText.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></span> ${selectedAiSurfaceIds.size}面の幾何連動波形を計算中 (${theme})...`;
+
+      await new Promise(r => setTimeout(r, 250));
+
+      // 3. 選択されたレイヤーリストを取得
+      const targetLayers = layers.filter(l => selectedAiSurfaceIds.has(l.id) && l.type === 'shape');
+      const totalFaces = targetLayers.length;
+      const generatedTextures = [];
+
+      targetLayers.forEach((layer, idx) => {
+        const role = surfaceRolesMap[layer.id] || detectSurfaceRole(layer, targetLayers);
+        const uniqueKey = `ai_${theme}_${role}_${Date.now()}_${idx}`;
+        const roleLabelMap = { top: '天面', left: '左面', right: '右面', front: '正面', generic: '一般面' };
+        const roleLabel = roleLabelMap[role] || '面';
+        const textureName = `[AI] ${promptText.slice(0, 10)}.. (${roleLabel})`;
+
+        const drawFn = createCoordinatedDrawFunction(theme, role, idx, totalFaces, {
+          speed,
+          colorTheme,
+          coordMode,
+          prompt: promptText
+        });
+
+        const motionDef = {
+          key: uniqueKey,
+          name: textureName,
+          isAi: true,
+          aiMeta: {
+            key: uniqueKey,
+            name: textureName,
+            prompt: promptText,
+            theme,
+            role,
+            faceIndex: idx,
+            totalFaces,
+            speed,
+            colorTheme,
+            coordMode,
+            timestamp: Date.now()
+          },
+          draw: drawFn
+        };
+
+        MOTION_TEXTURE_LIBRARY.push(motionDef);
+        aiGeneratedMotions.unshift(motionDef.aiMeta);
+
+        // レイヤーへ即座に適用
+        applyMotionTextureToLayer(layer, motionDef);
+        generatedTextures.push({ layer, motionDef });
+      });
+
+      // 保存 & サムネイル更新
+      saveAiMotionsToStorage();
+      await preloadAiMotionThumbnails();
+      commitHistory();
+      renderFrame();
+
+      aiProgressBar.style.width = '100%';
+      aiProgressPercent.textContent = '100%';
+      aiProgressStatusText.innerHTML = '✨ 生成完了！投影面にリアルタイム送出中';
+
+      await new Promise(r => setTimeout(r, 300));
+
+      // 4. プログレス終了 & プレビュー表示
+      aiProgressArea.classList.add('hidden');
+      aiGenerateBtn.disabled = false;
+      aiGenerateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+      // プレビューグリッド構築
+      aiResultArea.classList.remove('hidden');
+      aiResultThumbnailsGrid.innerHTML = '';
+
+      generatedTextures.forEach(({ layer, motionDef }) => {
+        const card = document.createElement('div');
+        card.className = 'flex flex-col gap-1 p-2 rounded-lg bg-slate-900 border border-teal-500/30 text-center';
+
+        const c = document.createElement('canvas');
+        c.width = 120; c.height = 120;
+        c.className = 'w-full aspect-square rounded bg-slate-950 block';
+        c.dataset.key = motionDef.key;
+
+        const lbl = document.createElement('span');
+        lbl.className = 'text-[10px] text-teal-300 font-bold truncate';
+        lbl.textContent = `${layer.name} (${motionDef.aiMeta.role})`;
+
+        card.appendChild(c);
+        card.appendChild(lbl);
+        aiResultThumbnailsGrid.appendChild(card);
+      });
+
+      // プレビューアニメーションループ開始
+      if (aiPreviewRafId) cancelAnimationFrame(aiPreviewRafId);
+      const prevT0 = performance.now();
+      const prevLoop = () => {
+        const pt = (performance.now() - prevT0) / 1000;
+        aiResultThumbnailsGrid.querySelectorAll('canvas').forEach(cv => {
+          const def = MOTION_TEXTURE_LIBRARY.find(m => m.key === cv.dataset.key);
+          if (def) {
+            const pctx = cv.getContext('2d');
+            try { def.draw(pctx, cv.width, cv.height, pt); } catch (e) {}
+          }
+        });
+        aiPreviewRafId = requestAnimationFrame(prevLoop);
+      };
+      aiPreviewRafId = requestAnimationFrame(prevLoop);
+
+      showToast(`🎉 AIモーションテクスチャーを${generatedTextures.length}面に適用しました！`);
+      showStatus(`✨ AIモーション生成完了: 「${promptText.slice(0, 20)}」`);
+      triggerFirebaseUpdate();
+    }
+
+    // ================= AI Motion Studio 初期化 & イベント結線 =================
+    function initAiMotionStudio() {
+      // トリガーボタン
+      if (openAiMotionBtn) openAiMotionBtn.addEventListener('click', openAiMotionModal);
+      if (mediaAiMotionBtn) mediaAiMotionBtn.addEventListener('click', openAiMotionModal);
+      if (layerAiMotionBtn) layerAiMotionBtn.addEventListener('click', () => {
+        if (activeId) selectedAiSurfaceIds.add(activeId);
+        openAiMotionModal();
+      });
+
+      // モーダル閉じる
+      if (closeAiModalBtn) closeAiModalBtn.addEventListener('click', closeAiMotionModal);
+      if (aiCancelBtn) aiCancelBtn.addEventListener('click', closeAiMotionModal);
+
+      // モーダル背景クリックで閉じる
+      if (aiMotionModal) {
+        aiMotionModal.addEventListener('click', (e) => {
+          if (e.target === aiMotionModal) closeAiMotionModal();
+        });
+      }
+
+      // クイック選択ツールバー
+      if (aiSelectAllBtn) {
+        aiSelectAllBtn.addEventListener('click', () => {
+          layers.filter(l => l.type === 'shape').forEach(l => selectedAiSurfaceIds.add(l.id));
+          refreshAiModalSurfaces();
+        });
+      }
+      if (aiSelectCubeBtn) {
+        aiSelectCubeBtn.addEventListener('click', () => {
+          selectedAiSurfaceIds.clear();
+          const cubeLayers = layers.filter(l => l.type === 'shape' && (l.name.includes('キューブ') || l.name.includes('Cube') || l.name.includes('天') || l.name.includes('左') || l.name.includes('右')));
+          if (cubeLayers.length > 0) {
+            cubeLayers.forEach(l => selectedAiSurfaceIds.add(l.id));
+          } else {
+            // キューブがなければ最初の3面
+            layers.filter(l => l.type === 'shape').slice(0, 3).forEach(l => selectedAiSurfaceIds.add(l.id));
+          }
+          refreshAiModalSurfaces();
+        });
+      }
+      if (aiSelectActiveBtn) {
+        aiSelectActiveBtn.addEventListener('click', () => {
+          selectedAiSurfaceIds.clear();
+          if (activeId) selectedAiSurfaceIds.add(activeId);
+          refreshAiModalSurfaces();
+        });
+      }
+      if (aiClearSelectBtn) {
+        aiClearSelectBtn.addEventListener('click', () => {
+          selectedAiSurfaceIds.clear();
+          refreshAiModalSurfaces();
+        });
+      }
+
+      // キューブプリセット追加ボタン (空の場合)
+      if (aiAddCubePresetBtn) {
+        aiAddCubePresetBtn.addEventListener('click', () => {
+          addPresetLayers('cube');
+          const cubeLayers = layers.filter(l => l.type === 'shape');
+          selectedAiSurfaceIds.clear();
+          cubeLayers.forEach(l => selectedAiSurfaceIds.add(l.id));
+          refreshAiModalSurfaces();
+          showToast('📐 3Dキューブ(天面・左面・右面)を配置して選択しました');
+        });
+      }
+
+      // プロンプトクリア
+      if (aiClearPromptBtn) {
+        aiClearPromptBtn.addEventListener('click', () => {
+          aiPromptInput.value = '';
+          aiPromptInput.focus();
+        });
+      }
+
+      // おすすめプロンプトタグ
+      document.querySelectorAll('.ai-prompt-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const text = chip.dataset.prompt;
+          if (text) {
+            aiPromptInput.value = text;
+            aiPromptInput.focus();
+          }
+        });
+      });
+
+      // 生成ボタン
+      if (aiGenerateBtn) {
+        aiGenerateBtn.addEventListener('click', executeAiMotionGeneration);
+      }
+    }
     // ================= カスタム(ユーザー追加)動画ライブラリ ロジック =================
     // ユーザーが自分の動画をアップロードし、通常の動画メディアと同様にループ再生する。
     function saveCustomMotions() {
@@ -7135,6 +8710,7 @@
       } else if (e.key === 's' || e.key === 'S') {
         saveLayers();
       } else if (e.key === 'Escape') {
+        if (aiMotionModal && !aiMotionModal.classList.contains('hidden')) { closeAiMotionModal(); return; }
         if (isPenMode) { exitPenMode(); return; }
         selectedVertex = null;
         rebuildDOM();
@@ -7226,6 +8802,11 @@
       loadCustomMotionsFromStorage();
       await preloadCustomTextureThumbnails();
       await preloadCustomMotionThumbnails();
+
+      // AIモーションテクスチャーの復元 & スタジオ初期化
+      loadAiMotionsFromStorage();
+      await preloadAiMotionThumbnails();
+      initAiMotionStudio();
 
       // シーケンス管理 & スケジューラーの状態を復元
       loadSequencesFromStorage();
