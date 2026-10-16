@@ -818,6 +818,65 @@
       opacity: 0;
       pointer-events: none;
     }
+
+    /* Pen Layer & Animations (Integrated from Canvas Pro) */
+    .pen-svg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 35;
+    }
+    .pen-svg-layer.pen-active {
+      pointer-events: auto;
+      cursor: crosshair;
+    }
+    .pen-stroke-anim-glow {
+      animation: lumenStrokeGlow 1.8s ease-in-out infinite alternate;
+    }
+    .pen-stroke-anim-blink {
+      animation: lumenStrokeBlink 0.6s steps(1) infinite;
+    }
+    .pen-stroke-anim-pulse {
+      animation: lumenStrokePulse 1.4s ease-in-out infinite alternate;
+    }
+    .pen-stroke-anim-flow {
+      stroke-dasharray: 12 8;
+      animation: lumenStrokeFlow 1.5s linear infinite;
+    }
+    .pen-stroke-anim-laser {
+      stroke-dasharray: 20 60;
+      animation: lumenStrokeFlow 0.8s linear infinite;
+    }
+    .pen-stroke-anim-rainbow {
+      animation: lumenStrokeRainbow 3s linear infinite;
+    }
+
+    @keyframes lumenStrokeGlow {
+      from { filter: drop-shadow(0 0 4px currentColor); }
+      to { filter: drop-shadow(0 0 16px currentColor); }
+    }
+    @keyframes lumenStrokeBlink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0.15; }
+    }
+    @keyframes lumenStrokePulse {
+      0%, 100% { stroke-width: var(--pw, 4px); }
+      50% { stroke-width: calc(var(--pw, 4px) * 2.2); }
+    }
+    @keyframes lumenStrokeFlow {
+      to { stroke-dashoffset: -100; }
+    }
+    @keyframes lumenStrokeRainbow {
+      0% { color: #f43f5e; }
+      20% { color: #f59e0b; }
+      40% { color: #10b981; }
+      60% { color: #00f0ff; }
+      80% { color: #9d4edd; }
+      100% { color: #f43f5e; }
+    }
   </style>
 </head>
 <body>
@@ -829,7 +888,17 @@
           <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm11 2h2v-2h-2v2zm0 4h2v-2h-2v2zm-2-2h2v-2h-2v2zm4 0h2v-2h-2v2zm0 4h2v-2h-2v2z"/></svg>
         </div>
         <span class="brand-name">LUMEN MAPPER</span>
-        <span class="brand-badge">MVP</span>
+        <span class="brand-badge">STUDIO</span>
+
+        <!-- App Switcher Tabs -->
+        <div class="app-switcher-tabs" style="display: flex; gap: 4px; background: rgba(0,0,0,0.5); padding: 2px 4px; border-radius: 8px; border: 1px solid var(--border-color); margin-left: 10px;">
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; font-size: 11px; font-weight: 700; border-radius: 6px; background: rgba(0, 240, 255, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 240, 255, 0.35);">
+            📐 3D Studio
+          </span>
+          <a href="canvas-pro.html" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; background: rgba(20, 184, 166, 0.1); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(20,184,166,0.25)'" onmouseout="this.style.background='rgba(20,184,166,0.1)'" title="WebGL・多角形・タイムライン・描画ソフト CANVAS PRO へ切替">
+            🚀 CANVAS PRO
+          </a>
+        </div>
       </div>
 
       <div class="header-actions">
@@ -844,6 +913,11 @@
         <button id="addSurfaceBtn" class="btn-primary" title="サーフェス追加">
           <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           サーフェス追加
+        </button>
+
+        <button id="penToolToggleBtn" title="ペン描画ツール (Canvas Pro)">
+          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          ✏️ ペン描画
         </button>
 
         <button id="snapToggleBtn" class="btn-active" title="頂点マグネット吸着">
@@ -913,6 +987,12 @@
           <!-- Warped Content Elements Container -->
           <div class="surfaces-layer" id="surfacesLayer"></div>
 
+          <!-- Integrated Pen Drawing Layer (Canvas Pro features) -->
+          <svg class="pen-svg-layer" id="stagePenSvg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+            <g id="penStrokesGroup"></g>
+            <path id="currentPenDrawingPath" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+
           <!-- SVG Overlay for outlines and handles -->
           <svg class="overlay-svg" id="overlaySvg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
             <defs>
@@ -925,6 +1005,35 @@
             <g id="svgSnapGuidesGroup"></g>
             <g id="svgHandlesGroup"></g>
           </svg>
+        </div>
+
+        <!-- Floating Pen Drawing Toolbar (Canvas Pro integration) -->
+        <div class="pen-floating-bar" id="penFloatingBar" style="display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(15, 18, 25, 0.95); border: 1px solid rgba(20, 184, 166, 0.5); border-radius: 10px; padding: 6px 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.7); z-index: 80; align-items: center; gap: 10px; backdrop-filter: blur(8px);">
+          <span style="font-size: 11px; font-weight: 700; color: #2dd4bf; display: flex; align-items: center; gap: 4px;">
+            ✏️ ペン描画中
+          </span>
+          <label style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
+            色:
+            <input type="color" id="lumenPenColor" value="#00f0ff" style="width: 20px; height: 20px; border: none; background: transparent; cursor: pointer;">
+          </label>
+          <label style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
+            太さ:
+            <input type="range" id="lumenPenWidth" min="1" max="25" value="4" style="width: 55px;">
+          </label>
+          <label style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
+            効果:
+            <select id="lumenPenAnim" style="background: rgba(0,0,0,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 5px; font-size: 11px;">
+              <option value="glow">ネオングロー</option>
+              <option value="pulse">脈動 (Pulse)</option>
+              <option value="blink">点滅 (Blink)</option>
+              <option value="laser">レーザー流光</option>
+              <option value="rainbow">虹色 (Rainbow)</option>
+              <option value="flow">光の流れ (Flow)</option>
+              <option value="none">通常</option>
+            </select>
+          </label>
+          <button id="lumenPenClearBtn" style="padding: 2px 7px; font-size: 11px; background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); border-radius: 4px; cursor: pointer;">クリア</button>
+          <button id="lumenPenCloseBtn" style="padding: 2px 7px; font-size: 11px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer;">完了</button>
         </div>
 
         <!-- Floating HUD Coordinates Tooltip -->
@@ -1013,6 +1122,35 @@
             <div class="source-btn" data-source="webcam">
               <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
               Webカメラ映像
+            </div>
+            <!-- Canvas Pro Integrated Textures -->
+            <div class="source-btn" data-source="cube3d">
+              <svg viewBox="0 0 24 24"><path d="M21 16.5l-9 5.2-9-5.2V7.5l9-5.2 9 5.2v9zM12 4.15L5.04 8.18 12 12.2l6.96-4.02L12 4.15zM4 9.92v6.66l7 4.04V13.9L4 9.92zm9 10.7l7-4.04V9.92l-7 3.98v6.72z"/></svg>
+              立体キューブ
+            </div>
+            <div class="source-btn" data-source="geometric">
+              <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              幾何学模様
+            </div>
+            <div class="source-btn" data-source="fireworks">
+              <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.07-6.93l-2.83 2.83m-8.48 8.48l-2.83 2.83m0-14.14l2.83 2.83m8.48 8.48l2.83 2.83"/></svg>
+              花火
+            </div>
+            <div class="source-btn" data-source="petals">
+              <svg viewBox="0 0 24 24"><path d="M12 2C9 7 4 9 4 13c0 4.42 3.58 8 8 8s8-3.58 8-8c0-4-5-6-8-11z"/></svg>
+              舞う花びら
+            </div>
+            <div class="source-btn" data-source="rain">
+              <svg viewBox="0 0 24 24"><path d="M4 14c0 3.31 2.69 6 6 6h8c2.21 0 4-1.79 4-4 0-2.05-1.53-3.76-3.56-3.97C17.9 9.38 15.68 7 13 7c-2.39 0-4.4 1.83-4.88 4.2C6.09 11.66 4 12.63 4 14zm4 8l-2 3m6-3l-2 3m6-3l-2 3"/></svg>
+              雨・しずく
+            </div>
+            <div class="source-btn" data-source="bubbles">
+              <svg viewBox="0 0 24 24"><path d="M7 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm10 5a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm-8 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+              シャボン玉
+            </div>
+            <div class="source-btn" data-source="people">
+              <svg viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/></svg>
+              人の移動
             </div>
           </div>
 
@@ -1145,6 +1283,16 @@
           <li>マグネットスナップが有効なため、隣り合う面の頂点同士がピタッと吸着します。</li>
         </ol>
 
+        <h4 style="color: var(--accent-cyan); margin-bottom: 8px;">2つのプロジェクションマッピングソフトの統合</h4>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 11px; line-height: 1.6; color: var(--text-secondary);">
+          <div style="margin-bottom: 6px;">
+            <b style="color: var(--accent-cyan);">📐 LUMEN MAPPER (Studioモード):</b> 3Dキューブ・ツインピラー等の立体面マッピング、4点キーストーン幾何補正、デュアルディスプレイ出力に特化。
+          </div>
+          <div>
+            <b style="color: #2dd4bf;">🚀 CANVAS PRO (WebGLモード):</b> ヘッダー上部から切替可能。円形・任意多角形・フリーフォーム・シーケンスタイムライン・リアル/モーションテクスチャライブラリ・Firebase共同編集に対応。
+          </div>
+        </div>
+
         <h4 style="color: var(--accent-cyan); margin-bottom: 8px;">キーボードショートカット</h4>
         <table class="shortcut-table">
           <tr><td><kbd>F</kbd></td><td>全画面プレゼンテーションモード（黒背景・UI非表示）の切替</td></tr>
@@ -1211,6 +1359,18 @@
       // Global Broadcast Channel for dual-window projection
       const bc = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
 
+      // Canvas Pro procedural pseudo-random number generator
+      function _mtxPrng(seed) {
+        const x = Math.sin(seed * 12.9898153) * 43758.5453123;
+        return x - Math.floor(x);
+      }
+
+      // Integrated Pen Drawing State (Canvas Pro)
+      let isPenMode = false;
+      let isDrawingPen = false;
+      let penStrokes = []; // Array of { id, points: [[x,y], ...], color, width, anim }
+      let currentStroke = null;
+
       // Color themes for handles
       const CORNER_COLORS = ['#10b981', '#06b6d4', '#8b5cf6', '#f43f5e']; // TL, TR, BR, BL
       const CORNER_NAMES = ['TL (左上)', 'TR (右上)', 'BR (右下)', 'BL (左下)'];
@@ -1249,6 +1409,18 @@
       const zoomLevelText = document.getElementById('zoomLevelText');
       const fpsCounter = document.getElementById('fpsCounter');
       const activeSurfaceStatus = document.getElementById('activeSurfaceStatus');
+
+      // Pen Tool DOM Elements
+      const penToolToggleBtn = document.getElementById('penToolToggleBtn');
+      const penFloatingBar = document.getElementById('penFloatingBar');
+      const stagePenSvg = document.getElementById('stagePenSvg');
+      const penStrokesGroup = document.getElementById('penStrokesGroup');
+      const currentPenDrawingPath = document.getElementById('currentPenDrawingPath');
+      const lumenPenColor = document.getElementById('lumenPenColor');
+      const lumenPenWidth = document.getElementById('lumenPenWidth');
+      const lumenPenAnim = document.getElementById('lumenPenAnim');
+      const lumenPenClearBtn = document.getElementById('lumenPenClearBtn');
+      const lumenPenCloseBtn = document.getElementById('lumenPenCloseBtn');
 
       // Inspector Elements
       const surfaceNameInput = document.getElementById('surfaceNameInput');
@@ -1570,8 +1742,14 @@
           // Listen for updates from main window
           bc.onmessage = (e) => {
             if (e.data && e.data.type === 'SYNC_STATE') {
-              state.surfaces = e.data.surfaces;
-              renderSurfaces();
+              if (e.data.surfaces) {
+                state.surfaces = e.data.surfaces;
+                renderSurfaces();
+              }
+              if (e.data.penStrokes) {
+                penStrokes = e.data.penStrokes;
+                renderPenStrokes();
+              }
             }
           };
           // Request initial state from opener
@@ -1581,6 +1759,7 @@
           setupBroadcastChannel();
           setupEventListeners();
           setupAudioReactivity();
+          setupPenDrawingSystem();
           pushHistory();
           updateUI();
         }
@@ -1605,7 +1784,8 @@
       function broadcastState() {
         bc.postMessage({
           type: 'SYNC_STATE',
-          surfaces: state.surfaces
+          surfaces: state.surfaces,
+          penStrokes: penStrokes
         });
       }
 
@@ -2183,9 +2363,357 @@
           ctx.fillRect(w / 3, h * 0.85, w / 3, h * 0.15);
           ctx.fillStyle = '#131313';
           ctx.fillRect((w * 2) / 3, h * 0.85, w / 3, h * 0.15);
+        } else if (surf.source === 'cube3d') {
+          // 立体回転キューブ (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          const grad = ctx.createLinearGradient(0, 0, 0, h);
+          grad.addColorStop(0, '#050810'); grad.addColorStop(1, '#0d1b2e');
+          ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+
+          const cx = w / 2, cy = h / 2;
+          const scale = Math.min(w, h) * (0.26 + beat * 0.08);
+          const ax = t * 0.6, ay = t * 0.85, az = t * 0.35;
+          const pts3d = [
+            [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+            [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
+          ];
+          function rot(p) {
+            let [x, y, z] = p;
+            const cy_ = Math.cos(ay), sy_ = Math.sin(ay);
+            const x1 = x * cy_ + z * sy_, z1 = -x * sy_ + z * cy_;
+            const cx_ = Math.cos(ax), sx_ = Math.sin(ax);
+            const y1 = y * cx_ - z1 * sx_, z2 = y * sx_ + z1 * cx_;
+            const cz_ = Math.cos(az), sz_ = Math.sin(az);
+            const x2 = x1 * cz_ - y1 * sz_, y2 = x1 * sz_ + y1 * cz_;
+            return [x2, y2, z2];
+          }
+          const proj = pts3d.map(p => {
+            const [x, y, z] = rot(p);
+            const persp = 1 / (2.6 - z * 0.5);
+            return [cx + x * scale * persp, cy + y * scale * persp];
+          });
+          const edges = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+          ctx.lineWidth = Math.max(1.5, w * 0.012);
+          ctx.strokeStyle = '#5eead4';
+          ctx.shadowColor = '#14b8a6'; ctx.shadowBlur = w * 0.05;
+          edges.forEach(([a, b]) => {
+            ctx.beginPath();
+            ctx.moveTo(proj[a][0], proj[a][1]);
+            ctx.lineTo(proj[b][0], proj[b][1]);
+            ctx.stroke();
+          });
+          ctx.shadowBlur = 0;
+          proj.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], w * 0.012, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+          });
+        } else if (surf.source === 'geometric') {
+          // 幾何学模様 (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = '#07080d';
+          ctx.fillRect(0, 0, w, h);
+          const cx = w / 2, cy = h / 2;
+          const layers = 6;
+          for (let l = 0; l < layers; l++) {
+            const n = 3 + l;
+            const r = (Math.min(w, h) * 0.08) * (l + 1) * (1 + beat * 0.15);
+            const rot = t * (0.2 + l * 0.07) * (l % 2 === 0 ? 1 : -1);
+            const hue = (t * 40 + l * 45) % 360;
+            ctx.strokeStyle = `hsla(${hue}, 85%, 65%, 0.85)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i <= n; i++) {
+              const a = rot + (i / n) * Math.PI * 2;
+              const x = cx + Math.cos(a) * r;
+              const y = cy + Math.sin(a) * r;
+              if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+          }
+        } else if (surf.source === 'bubbles') {
+          // シャボン玉 (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = '#03050a';
+          ctx.fillRect(0, 0, w, h);
+          const N = 24;
+          for (let i = 0; i < N; i++) {
+            const seed = i * 73.13;
+            const speed = 0.06 + _mtxPrng(seed) * 0.1;
+            const rad = (0.02 + _mtxPrng(seed + 1) * 0.055) * Math.min(w, h);
+            const x0 = _mtxPrng(seed + 2) * w;
+            const y0 = h + rad + 20;
+            const y = y0 - ((t * speed * h + _mtxPrng(seed + 3) * h * 1.5) % (h + rad * 2 + 40));
+            const x = x0 + Math.sin(t * 1.5 + seed) * (w * 0.035);
+            const hue = (seed * 11 + t * 25) % 360;
+            const grad = ctx.createRadialGradient(x - rad * 0.3, y - rad * 0.3, rad * 0.1, x, y, rad);
+            grad.addColorStop(0, `hsla(${hue}, 90%, 85%, 0.7)`);
+            grad.addColorStop(0.7, `hsla(${hue}, 80%, 55%, 0.35)`);
+            grad.addColorStop(1, `hsla(${(hue + 40) % 360}, 90%, 60%, 0.1)`);
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = `hsla(${hue}, 90%, 75%, 0.6)`;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+          }
+        } else if (surf.source === 'rain') {
+          // 雨 (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = '#05070d';
+          ctx.fillRect(0, 0, w, h);
+          const N = 80;
+          ctx.strokeStyle = 'rgba(165, 215, 255, 0.65)';
+          ctx.lineWidth = 1.2;
+          for (let i = 0; i < N; i++) {
+            const seed = i * 19.7;
+            const speed = 0.5 + _mtxPrng(seed) * 0.6;
+            const len = (0.03 + _mtxPrng(seed + 1) * 0.04) * h;
+            const x = _mtxPrng(seed + 2) * w;
+            const y = ((t * speed * h + _mtxPrng(seed + 3) * h) % (h + len)) - len;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - len * 0.2, y + len);
+            ctx.stroke();
+          }
+        } else if (surf.source === 'fireworks') {
+          // 花火 (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(4, 5, 8, 0.3)';
+          ctx.fillRect(0, 0, w, h);
+          const bursts = 3;
+          for (let b = 0; b < bursts; b++) {
+            const seed = b * 31.7;
+            const period = 2.4;
+            const localT = (t + _mtxPrng(seed) * period) % period;
+            const cx = (0.2 + _mtxPrng(seed + 1) * 0.6) * w;
+            const cy = (0.2 + _mtxPrng(seed + 2) * 0.45) * h;
+            const hue = (_mtxPrng(seed + 3) * 360) % 360;
+            const maxR = Math.min(w, h) * (0.22 + _mtxPrng(seed + 4) * 0.12);
+            const progress = localT / period;
+            if (progress < 0.75) {
+              const r = Math.sin(progress / 0.75 * Math.PI * 0.5) * maxR;
+              const alpha = 1 - progress / 0.75;
+              const sparks = 28;
+              for (let s = 0; s < sparks; s++) {
+                const ang = (s / sparks) * Math.PI * 2;
+                const spSeed = seed + s * 3.3;
+                const distVar = 0.8 + _mtxPrng(spSeed) * 0.4;
+                const x = cx + Math.cos(ang) * r * distVar;
+                const y = cy + Math.sin(ang) * r * distVar + (progress * progress * h * 0.08);
+                ctx.fillStyle = `hsla(${hue}, 95%, 65%, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(x, y, Math.max(1, (1 - progress) * 3), 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+        } else if (surf.source === 'petals') {
+          // 舞う花びら (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = '#06070a';
+          ctx.fillRect(0, 0, w, h);
+          const N = 35;
+          for (let i = 0; i < N; i++) {
+            const seed = i * 47.9;
+            const speed = 0.05 + _mtxPrng(seed) * 0.08;
+            const scale = (0.015 + _mtxPrng(seed + 1) * 0.02) * Math.min(w, h);
+            const x0 = _mtxPrng(seed + 2) * w;
+            const y = ((t * speed * h + _mtxPrng(seed + 3) * h) % (h + scale * 4)) - scale * 2;
+            const x = x0 + Math.sin(t * 1.8 + seed) * (w * 0.06);
+            const rot = t * 1.5 + seed;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rot);
+            ctx.fillStyle = 'rgba(255, 180, 205, 0.8)';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, scale, scale * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        } else if (surf.source === 'people') {
+          // 人の移動 (Canvas Pro)
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = '#08090c';
+          ctx.fillRect(0, 0, w, h);
+          const groundY = h * 0.82;
+          ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+          ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(w, groundY); ctx.stroke();
+
+          const N = 6;
+          for (let i = 0; i < N; i++) {
+            const seed = i * 41.3;
+            const speed = 0.08 + _mtxPrng(seed) * 0.05;
+            const dir = _mtxPrng(seed + 1) > 0.5 ? 1 : -1;
+            const phase = _mtxPrng(seed + 2) * 1000;
+            const scale = (0.09 + _mtxPrng(seed + 3) * 0.07) * Math.min(w, h);
+            const progress = ((t * speed + phase) % 1.3) / 1.0;
+            const x = dir > 0 ? (progress * (w + scale * 2)) - scale : (w - progress * (w + scale * 2)) + scale;
+            const y = groundY - scale * 1.6 + Math.sin(seed) * h * 0.05;
+            const walk = Math.sin(t * 8 + seed * 3);
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(dir, 1);
+            ctx.strokeStyle = 'rgba(230,230,235,0.9)';
+            ctx.fillStyle = 'rgba(230,230,235,0.9)';
+            ctx.lineWidth = Math.max(1.5, scale * 0.07);
+            ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.arc(0, -scale * 1.55, scale * 0.18, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0, -scale * 1.35); ctx.lineTo(0, -scale * 0.55); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -scale * 1.15); ctx.lineTo(walk * scale * 0.35, -scale * 0.75);
+            ctx.moveTo(0, -scale * 1.15); ctx.lineTo(-walk * scale * 0.35, -scale * 0.75);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -scale * 0.55); ctx.lineTo(walk * scale * 0.32, 0);
+            ctx.moveTo(0, -scale * 0.55); ctx.lineTo(-walk * scale * 0.32, 0);
+            ctx.stroke();
+            ctx.restore();
+          }
         }
 
         ctx.restore();
+      }
+
+      /**
+       * Integrated Pen Drawing System (Canvas Pro features)
+       */
+      function setupPenDrawingSystem() {
+        if (!penToolToggleBtn || !stagePenSvg) return;
+
+        penToolToggleBtn.addEventListener('click', () => {
+          togglePenMode();
+        });
+
+        if (lumenPenCloseBtn) {
+          lumenPenCloseBtn.addEventListener('click', () => {
+            togglePenMode(false);
+          });
+        }
+
+        if (lumenPenClearBtn) {
+          lumenPenClearBtn.addEventListener('click', () => {
+            if (penStrokes.length > 0 && confirm('手描きのペン描画をすべてクリアしますか？')) {
+              penStrokes = [];
+              renderPenStrokes();
+              broadcastState();
+              autoSaveLocal();
+            }
+          });
+        }
+
+        // Pointer Events on stagePenSvg for freehand drawing
+        stagePenSvg.addEventListener('pointerdown', (e) => {
+          if (!isPenMode) return;
+          e.preventDefault();
+          e.stopPropagation();
+          isDrawingPen = true;
+          const pt = getStageCoordinates(e);
+          currentStroke = {
+            id: 'stroke_' + Date.now(),
+            points: [[Math.round(pt.x), Math.round(pt.y)]],
+            color: lumenPenColor ? lumenPenColor.value : '#00f0ff',
+            width: lumenPenWidth ? parseInt(lumenPenWidth.value, 10) : 4,
+            anim: lumenPenAnim ? lumenPenAnim.value : 'glow'
+          };
+          updateCurrentPenPath();
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (!isDrawingPen || !currentStroke) return;
+          const pt = getStageCoordinates(e);
+          currentStroke.points.push([Math.round(pt.x), Math.round(pt.y)]);
+          updateCurrentPenPath();
+        });
+
+        window.addEventListener('pointerup', () => {
+          if (!isDrawingPen) return;
+          isDrawingPen = false;
+          if (currentStroke && currentStroke.points.length > 1) {
+            penStrokes.push(currentStroke);
+            renderPenStrokes();
+            broadcastState();
+            autoSaveLocal();
+          }
+          currentStroke = null;
+          if (currentPenDrawingPath) currentPenDrawingPath.setAttribute('d', '');
+        });
+
+        // Load saved pen strokes if available
+        try {
+          const saved = localStorage.getItem('lumen_mapper_project');
+          if (saved) {
+            const data = JSON.parse(saved);
+            if (data.penStrokes && Array.isArray(data.penStrokes)) {
+              penStrokes = data.penStrokes;
+              renderPenStrokes();
+            }
+          }
+        } catch (err) {}
+      }
+
+      function togglePenMode(force) {
+        isPenMode = typeof force === 'boolean' ? force : !isPenMode;
+        if (isPenMode) {
+          penToolToggleBtn.classList.add('btn-active');
+          if (penFloatingBar) penFloatingBar.style.display = 'flex';
+          stagePenSvg.classList.add('pen-active');
+        } else {
+          penToolToggleBtn.classList.remove('btn-active');
+          if (penFloatingBar) penFloatingBar.style.display = 'none';
+          stagePenSvg.classList.remove('pen-active');
+          if (isDrawingPen && currentStroke) {
+            isDrawingPen = false;
+            if (currentStroke.points.length > 1) {
+              penStrokes.push(currentStroke);
+              renderPenStrokes();
+              broadcastState();
+              autoSaveLocal();
+            }
+            currentStroke = null;
+            if (currentPenDrawingPath) currentPenDrawingPath.setAttribute('d', '');
+          }
+        }
+      }
+
+      function updateCurrentPenPath() {
+        if (!currentStroke || !currentPenDrawingPath) return;
+        const pts = currentStroke.points;
+        if (pts.length < 2) return;
+        let d = `M ${pts[0][0]} ${pts[0][1]}`;
+        for (let i = 1; i < pts.length; i++) {
+          d += ` L ${pts[i][0]} ${pts[i][1]}`;
+        }
+        currentPenDrawingPath.setAttribute('d', d);
+        currentPenDrawingPath.setAttribute('stroke', currentStroke.color);
+        currentPenDrawingPath.setAttribute('stroke-width', currentStroke.width);
+      }
+
+      function renderPenStrokes() {
+        if (!penStrokesGroup) return;
+        penStrokesGroup.innerHTML = '';
+        penStrokes.forEach(stroke => {
+          if (!stroke.points || stroke.points.length < 2) return;
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          let d = `M ${stroke.points[0][0]} ${stroke.points[0][1]}`;
+          for (let i = 1; i < stroke.points.length; i++) {
+            d += ` L ${stroke.points[i][0]} ${stroke.points[i][1]}`;
+          }
+          path.setAttribute('d', d);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', stroke.color || '#00f0ff');
+          path.setAttribute('stroke-width', stroke.width || 4);
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+          path.style.setProperty('--pw', (stroke.width || 4) + 'px');
+          path.style.color = stroke.color || '#00f0ff';
+          if (stroke.anim && stroke.anim !== 'none') {
+            path.classList.add('pen-stroke-anim-' + stroke.anim);
+          }
+          penStrokesGroup.appendChild(path);
+        });
       }
 
       /**
@@ -2951,7 +3479,8 @@
        */
       function autoSaveLocal() {
         localStorage.setItem('lumen_mapper_project', JSON.stringify({
-          surfaces: state.surfaces
+          surfaces: state.surfaces,
+          penStrokes: penStrokes
         }));
       }
 
@@ -2963,10 +3492,11 @@
 
       function exportJson() {
         const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
-          version: '1.0',
-          appName: 'LUMEN MAPPER',
+          version: '1.1',
+          appName: 'LUMEN MAPPER + CANVAS PRO',
           exportTime: new Date().toISOString(),
-          surfaces: state.surfaces
+          surfaces: state.surfaces,
+          penStrokes: penStrokes
         }, null, 2));
         const a = document.createElement('a');
         a.href = dataStr;
@@ -2984,6 +3514,10 @@
             const data = JSON.parse(event.target.result);
             if (data.surfaces && Array.isArray(data.surfaces)) {
               state.surfaces = data.surfaces;
+              if (data.penStrokes && Array.isArray(data.penStrokes)) {
+                penStrokes = data.penStrokes;
+                renderPenStrokes();
+              }
               if (state.surfaces.length > 0) state.selectedId = state.surfaces[0].id;
               buildDOMSurfaces();
               updateUI();
