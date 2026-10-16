@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Projection Mapping Canvas Pro</title>
+  <title>LUMEN STUDIO PRO - Web Projection Mapping</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Firebase SDKs (Compat v10) for Rule Compatibility -->
@@ -584,20 +584,16 @@
 </head>
 <body class="bg-black select-none">
 
-  <!-- Top App Navigation Switcher -->
+  <!-- Top App Navigation / Tools Header -->
   <header class="fixed top-3 right-4 z-50 flex items-center gap-2 bg-slate-900/90 border border-slate-700/60 backdrop-blur-md rounded-xl px-3 py-1.5 shadow-2xl">
-    <div class="flex items-center gap-2 mr-2 border-r border-slate-700/60 pr-3">
+    <div class="flex items-center gap-2 mr-2">
       <div class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse"></div>
-      <span class="text-xs font-bold text-slate-100 font-mono tracking-wider">CANVAS PRO</span>
-      <span class="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded border border-teal-500/30 font-mono">WebGL</span>
+      <span class="text-xs font-bold text-slate-100 font-mono tracking-wider">LUMEN STUDIO PRO</span>
+      <span class="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded border border-teal-500/30 font-mono">ALL-IN-ONE</span>
     </div>
-    <a href="index.html" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-cyan-200 border border-cyan-500/30 text-xs font-semibold transition" title="LUMEN MAPPER (Studio) へ切替">
-      <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      <span>LUMEN MAPPER へ切替</span>
-    </a>
     <button id="navProjectorBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-medium transition" title="別ウィンドウでプロジェクター出力画面を開く">
       <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
-      <span>投影窓</span>
+      <span>プロジェクター投影窓</span>
     </button>
   </header>
 
@@ -674,6 +670,22 @@
           <button id="addPenBtn" class="flex flex-col items-center gap-1 p-2 bg-white/5 border border-white/5 hover:border-accentLight hover:bg-accentLight/10 rounded-lg text-slate-300 hover:text-accent transition text-[11px]" title="手書きペン画レイヤーを追加">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             <span>ペン線</span>
+          </button>
+        </div>
+
+        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1.5 mt-2.5">立体シーンプリセット</span>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button id="presetCubeBtn" class="flex flex-col items-center gap-1 p-1.5 bg-teal-950/30 border border-teal-500/20 hover:border-teal-500/50 hover:bg-teal-500/10 rounded-lg text-teal-300 transition text-[11px]" title="3D直方体・立方体の天面・左面・右面を自動配置">
+            <span class="text-sm">📐</span>
+            <span class="font-semibold">3Dキューブ</span>
+          </button>
+          <button id="presetColBtn" class="flex flex-col items-center gap-1 p-1.5 bg-white/5 border border-white/5 hover:border-accentLight hover:bg-accentLight/10 rounded-lg text-slate-300 hover:text-accent transition text-[11px]" title="左右ツインピラーを配置">
+            <span class="text-sm">🏛️</span>
+            <span>ツイン柱</span>
+          </button>
+          <button id="presetGridBtn" class="flex flex-col items-center gap-1 p-1.5 bg-white/5 border border-white/5 hover:border-accentLight hover:bg-accentLight/10 rounded-lg text-slate-300 hover:text-accent transition text-[11px]" title="4面マルチスクリーン(2x2)を配置">
+            <span class="text-sm">🔲</span>
+            <span>4面グリッド</span>
           </button>
         </div>
       </div>
@@ -1300,6 +1312,295 @@
 
     const MOTION_TEXTURE_LIBRARY = [
       {
+        key: 'neon_grid',
+        name: 'ネオングリッド',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#0a0a14';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const sunRadius = Math.min(w, h) * (0.16 + beat * 0.05);
+          const grad = ctx.createRadialGradient(w / 2, h * 0.45, 10, w / 2, h * 0.45, sunRadius);
+          grad.addColorStop(0, '#ff007f');
+          grad.addColorStop(0.6, '#ffaa00');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(w / 2, h * 0.45, sunRadius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = '#0a0a14';
+          ctx.lineWidth = 3;
+          for (let y = h * 0.35; y < h * 0.55; y += 8) {
+            ctx.beginPath();
+            ctx.moveTo(w * 0.3, y);
+            ctx.lineTo(w * 0.7, y);
+            ctx.stroke();
+          }
+
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.moveTo(0, h * 0.5);
+          ctx.lineTo(w, h * 0.5);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          ctx.shadowBlur = 8;
+          const vanishingX = w / 2;
+          const vanishingY = h * 0.5;
+          for (let x = -w; x <= w * 2; x += 60) {
+            ctx.beginPath();
+            ctx.moveTo(vanishingX, vanishingY);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+          }
+
+          const gridSpeed = (t * 1.5) % 1;
+          for (let i = 0; i < 15; i++) {
+            const depth = Math.pow((i + gridSpeed) / 15, 2.5);
+            const ly = vanishingY + depth * (h - vanishingY);
+            ctx.lineWidth = 1 + depth * 2;
+            ctx.beginPath();
+            ctx.moveTo(0, ly);
+            ctx.lineTo(w, ly);
+            ctx.stroke();
+          }
+          ctx.shadowBlur = 0;
+        }
+      },
+      {
+        key: 'pulse_waves',
+        name: 'パルスウェーブ',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#05050a';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          const cx = w / 2, cy = h / 2;
+          const rings = 8;
+          for (let i = 0; i < rings; i++) {
+            const progress = (t * 0.4 + i / rings) % 1;
+            const radius = progress * (w * 0.55);
+            const alpha = 1 - progress;
+            ctx.strokeStyle = `hsla(${((i * 45) + t * 40) % 360}, 100%, 65%, ${alpha})`;
+            ctx.lineWidth = 3 + beat * 12;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            const sides = 6;
+            for (let j = 0; j <= sides; j++) {
+              const angle = (j / sides) * Math.PI * 2 + t * 0.5 * (i % 2 === 0 ? 1 : -1);
+              const r = radius * (1 + 0.15 * Math.sin(angle * 4 + t * 3) * beat);
+              const px = cx + Math.cos(angle) * r;
+              const py = cy + Math.sin(angle) * r;
+              if (j === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
+          const coreR = 25 + beat * 35;
+          ctx.fillStyle = '#fff';
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 30;
+          ctx.beginPath();
+          ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      },
+      {
+        key: 'particles',
+        name: 'パーティクル',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = 'rgba(6, 8, 16, 0.3)';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          if (!this._pts || this._pts.length !== 40) {
+            this._pts = [];
+            for (let i = 0; i < 40; i++) {
+              this._pts.push({
+                x: Math.random() * w, y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
+                r: 2 + Math.random() * 3
+              });
+            }
+          }
+          const pts = this._pts;
+          pts.forEach(p => {
+            p.x += p.vx * (1 + beat * 2);
+            p.y += p.vy * (1 + beat * 2);
+            if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+            if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+          });
+          ctx.lineWidth = 1;
+          for (let i = 0; i < pts.length; i++) {
+            for (let j = i + 1; j < pts.length; j++) {
+              const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 110) {
+                const alpha = (1 - dist / 110) * (0.6 + beat * 0.4);
+                ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.moveTo(pts[i].x, pts[i].y);
+                ctx.lineTo(pts[j].x, pts[j].y);
+                ctx.stroke();
+              }
+            }
+          }
+          pts.forEach(p => {
+            ctx.fillStyle = '#ff007f';
+            ctx.shadowColor = '#ff007f'; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 + beat), 0, Math.PI * 2); ctx.fill();
+          });
+          ctx.shadowBlur = 0;
+        }
+      },
+      {
+        key: 'matrix',
+        name: 'マトリックス',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = 'rgba(0, 5, 2, 0.15)';
+          ctx.fillRect(0, 0, w, h);
+          if (!this._drops || this._drops.length !== Math.floor(w / 18)) {
+            const cols = Math.floor(w / 18);
+            this._drops = new Array(cols).fill(1);
+          }
+          ctx.fillStyle = '#00ff66';
+          ctx.font = '14px monospace';
+          const chars = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+          for (let i = 0; i < this._drops.length; i++) {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            const x = i * 18;
+            const y = this._drops[i] * 18;
+            ctx.fillStyle = Math.random() > 0.85 ? '#ffffff' : '#00ff66';
+            ctx.fillText(char, x, y);
+            if (y > h && Math.random() > 0.975) this._drops[i] = 0;
+            this._drops[i]++;
+          }
+        }
+      },
+      {
+        key: 'kaleidoscope',
+        name: '万華鏡トンネル',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, w, h);
+          const beat = typeof averageVolume !== 'undefined' ? averageVolume : 0.2;
+          ctx.save();
+          ctx.translate(w / 2, h / 2);
+          const petals = 12;
+          for (let i = 0; i < petals; i++) {
+            ctx.save();
+            ctx.rotate((i * Math.PI * 2) / petals + t * 0.5);
+            ctx.strokeStyle = `hsl(${(t * 50 + i * 30) % 360}, 100%, 65%)`;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(80 + beat * 50, -60, 180 + beat * 60, 60, 260 + beat * 40, 0);
+            ctx.stroke();
+            ctx.fillStyle = `hsla(${(t * 50 + i * 30 + 180) % 360}, 100%, 50%, 0.3)`;
+            ctx.beginPath(); ctx.arc(120, 0, 30 + beat * 20, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+      },
+      {
+        key: 'clock',
+        name: 'デジタル時計',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#0a0a10';
+          ctx.fillRect(0, 0, w, h);
+          const now = new Date();
+          const pad = n => String(n).padStart(2, '0');
+          const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+          const msStr = `.${String(Math.floor(now.getMilliseconds() / 10)).padStart(2, '0')}`;
+          const dateStr = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} PROJECTION LIVE`;
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '700 16px monospace';
+          ctx.fillStyle = '#9494a8';
+          ctx.fillText(dateStr, w / 2, h * 0.28);
+
+          ctx.font = '900 64px monospace';
+          ctx.fillStyle = '#00f0ff';
+          ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 20;
+          ctx.fillText(timeStr, w / 2 - 20, h * 0.52);
+
+          ctx.font = '700 32px monospace';
+          ctx.fillStyle = '#ff007f';
+          ctx.shadowColor = '#ff007f';
+          ctx.fillText(msStr, w / 2 + 180, h * 0.53);
+
+          ctx.strokeStyle = '#2e2e3e';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(20, 20, w - 40, h - 40);
+          ctx.shadowBlur = 0;
+        }
+      },
+      {
+        key: 'calibration',
+        name: 'テストグリッド',
+        draw(ctx, w, h, t) {
+          ctx.fillStyle = '#111';
+          ctx.fillRect(0, 0, w, h);
+          const cols = 8, rows = 6;
+          const cw = w / cols, ch = h / rows;
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              if ((r + c) % 2 === 0) {
+                ctx.fillStyle = '#222';
+                ctx.fillRect(c * cw, r * ch, cw, ch);
+              }
+              ctx.strokeStyle = '#444';
+              ctx.lineWidth = 1;
+              ctx.strokeRect(c * cw, r * ch, cw, ch);
+              ctx.fillStyle = '#777';
+              ctx.font = '11px monospace';
+              ctx.fillText(`${c},${r}`, c * cw + 4, r * ch + 14);
+            }
+          }
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 0); ctx.lineTo(w, h);
+          ctx.moveTo(w, 0); ctx.lineTo(0, h);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffff00';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.2, 0, Math.PI * 2);
+          ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.35, 0, Math.PI * 2);
+          ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h);
+          ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2);
+          ctx.stroke();
+        }
+      },
+      {
+        key: 'smpte',
+        name: 'カラーバー',
+        draw(ctx, w, h, t) {
+          const bars = ['#bfbfbf', '#bfbf00', '#00bfbf', '#00bf00', '#bf00bf', '#bf0000', '#0000bf'];
+          const barW = w / bars.length;
+          bars.forEach((color, i) => {
+            ctx.fillStyle = color;
+            ctx.fillRect(i * barW, 0, barW, h * 0.7);
+          });
+          const grad = ctx.createLinearGradient(0, h * 0.7, w, h * 0.7);
+          grad.addColorStop(0, '#000'); grad.addColorStop(1, '#fff');
+          ctx.fillStyle = grad; ctx.fillRect(0, h * 0.7, w, h * 0.15);
+          ctx.fillStyle = '#000'; ctx.fillRect(0, h * 0.85, w / 3, h * 0.15);
+          ctx.fillStyle = '#fff'; ctx.fillRect(w / 3, h * 0.85, w / 3, h * 0.15);
+          ctx.fillStyle = '#131313'; ctx.fillRect((w * 2) / 3, h * 0.85, w / 3, h * 0.15);
+        }
+      },
+      {
         key: 'cube3d',
         name: '立体回転キューブ',
         draw(ctx, w, h, t) {
@@ -1674,6 +1975,9 @@
     const addRectBtn = document.getElementById('addRectBtn');
     const addCircleBtn = document.getElementById('addCircleBtn');
     const addPenBtn = document.getElementById('addPenBtn');
+    const presetCubeBtn = document.getElementById('presetCubeBtn');
+    const presetColBtn = document.getElementById('presetColBtn');
+    const presetGridBtn = document.getElementById('presetGridBtn');
     const layerUpBtn = document.getElementById('layerUpBtn');
     const layerDownBtn = document.getElementById('layerDownBtn');
     const duplicateBtn = document.getElementById('duplicateBtn');
@@ -2039,6 +2343,135 @@
       updateEmptyHint();
       triggerFirebaseUpdate();
       return base;
+    }
+
+    function createPresetLayer(name, vertices, motionKey, color) {
+      const id = makeId();
+      const cx = (vertices[0][0] + vertices[1][0] + vertices[2][0] + vertices[3][0]) / 4;
+      const cy = (vertices[0][1] + vertices[1][1] + vertices[2][1] + vertices[3][1]) / 4;
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = 512; offCanvas.height = 512;
+
+      return {
+        id,
+        name,
+        type: 'shape',
+        shape: 'polygon',
+        color: color || '#00f0ff',
+        center: { x: cx, y: cy },
+        vertices: vertices.map(v => ({ x: v[0], y: v[1], u: 0, v: 0 })),
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        circleMode: 'freeform',
+        baseRadius: 100,
+        blendMode: 'normal',
+        fillColor: '#000000',
+        fillAlpha: 0,
+        strokeColor: '#ffffff',
+        strokeWidth: 0,
+        mediaEl: offCanvas,
+        mediaType: 'motion',
+        motionKey: motionKey || 'neon_grid',
+        motionStartTime: performance.now(),
+        mediaReady: true,
+        mediaKey: null,
+        textureNeedsUpload: false,
+        texture: null,
+        chromaEnabled: false,
+        chromaColor: '#00ff00',
+        chromaThreshold: 0.15,
+        chromaSmooth: 0.05,
+        textString: '',
+        textFontSize: 48,
+        shapeAnim: 'none',
+        uniformScale: 100,
+        mediaTransform: defaultMediaTransform()
+      };
+    }
+
+    function addPresetLayers(presetType) {
+      const rect = getRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+
+      if (presetType === 'cube') {
+        const hw = Math.min(rect.width, rect.height) * 0.22;
+        const hh = hw * 0.58;
+        // 天面 (Top)
+        const top = createPresetLayer('キューブ: 天面', [
+          [cx, cy - hh * 2],
+          [cx + hw, cy - hh],
+          [cx, cy],
+          [cx - hw, cy - hh]
+        ], 'neon_grid', '#00f0ff');
+
+        // 左面 (Left)
+        const left = createPresetLayer('キューブ: 左面', [
+          [cx - hw, cy - hh],
+          [cx, cy],
+          [cx, cy + hh * 1.8],
+          [cx - hw, cy + hh * 0.8]
+        ], 'pulse_waves', '#ff007f');
+
+        // 右面 (Right)
+        const right = createPresetLayer('キューブ: 右面', [
+          [cx, cy],
+          [cx + hw, cy - hh],
+          [cx + hw, cy + hh * 0.8],
+          [cx, cy + hh * 1.8]
+        ], 'cube3d', '#9d4edd');
+
+        layers.push(top, left, right);
+        activeId = top.id;
+        commitHistory();
+        rebuildDOM();
+        renderFrame();
+        updateEmptyHint();
+        triggerFirebaseUpdate();
+        showToast('📐 3Dキューブプリセット(3面)を配置しました');
+      } else if (presetType === 'columns') {
+        const colW = rect.width * 0.16;
+        const colH = rect.height * 0.68;
+        const col1 = createPresetLayer('柱 1 (左ピラー)', [
+          [cx - colW * 1.5, cy - colH / 2],
+          [cx - colW * 0.5, cy - colH / 2],
+          [cx - colW * 0.5, cy + colH / 2],
+          [cx - colW * 1.5, cy + colH / 2]
+        ], 'matrix', '#00f0ff');
+        const col2 = createPresetLayer('柱 2 (右ピラー)', [
+          [cx + colW * 0.5, cy - colH / 2],
+          [cx + colW * 1.5, cy - colH / 2],
+          [cx + colW * 1.5, cy + colH / 2],
+          [cx + colW * 0.5, cy + colH / 2]
+        ], 'matrix', '#14b8a6');
+
+        layers.push(col1, col2);
+        activeId = col1.id;
+        commitHistory();
+        rebuildDOM();
+        renderFrame();
+        updateEmptyHint();
+        triggerFirebaseUpdate();
+        showToast('🏛️ ツインピラープリセット(2本)を配置しました');
+      } else if (presetType === 'grid2x2') {
+        const gw = rect.width * 0.35;
+        const gh = rect.height * 0.35;
+        const gap = 12;
+        const g1 = createPresetLayer('グリッド 1 (左上)', [[cx - gw - gap, cy - gh - gap], [cx - gap, cy - gh - gap], [cx - gap, cy - gap], [cx - gw - gap, cy - gap]], 'geometric', '#00f0ff');
+        const g2 = createPresetLayer('グリッド 2 (右上)', [[cx + gap, cy - gh - gap], [cx + gw + gap, cy - gh - gap], [cx + gw + gap, cy - gap], [cx + gap, cy - gap]], 'neon_grid', '#ff007f');
+        const g3 = createPresetLayer('グリッド 3 (左下)', [[cx - gw - gap, cy + gap], [cx - gap, cy + gap], [cx - gap, cy + gh + gap], [cx - gw - gap, cy + gh + gap]], 'particles', '#10b981');
+        const g4 = createPresetLayer('グリッド 4 (右下)', [[cx + gap, cy + gap], [cx + gw + gap, cy + gap], [cx + gw + gap, cy + gh + gap], [cx + gap, cy + gh + gap]], 'kaleidoscope', '#f59e0b');
+
+        layers.push(g1, g2, g3, g4);
+        activeId = g1.id;
+        commitHistory();
+        rebuildDOM();
+        renderFrame();
+        updateEmptyHint();
+        triggerFirebaseUpdate();
+        showToast('🔲 4面グリッドプリセット(2x2)を配置しました');
+      }
     }
 
     function addPenLayer() {
@@ -3340,6 +3773,9 @@
     addRectBtn.addEventListener('click', () => addLayer('rect'));
     addCircleBtn.addEventListener('click', () => addLayer('circle'));
     addTextBtn.addEventListener('click', () => addLayer('text'));
+    if (presetCubeBtn) presetCubeBtn.addEventListener('click', () => addPresetLayers('cube'));
+    if (presetColBtn) presetColBtn.addEventListener('click', () => addPresetLayers('columns'));
+    if (presetGridBtn) presetGridBtn.addEventListener('click', () => addPresetLayers('grid2x2'));
     layerUpBtn.addEventListener('click', () => moveLayer(-1));
     layerDownBtn.addEventListener('click', () => moveLayer(1));
     
